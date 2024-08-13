@@ -114,9 +114,12 @@ Allow support more game servers by installing plugins!
   * **Raziel** - *Various small improvements and external Plugins*
 
 ### Give Love!
-If you like to thank me for the help over at the discord or the small changes here, feel free:
+If you like to thank me for the help over at the discord or the small changes in this fork, feel free to give me a tip:
 [Buy me a coffee](https://ko-fi.com/raziel7893)
 [Paypal](https://paypal.me/raziel7893)
+For the Programm in general have a look over at its patreon:
+[WGSM_Patreon](https://www.patreon.com/join/WindowsGSM)
+
 
 
 ### License
