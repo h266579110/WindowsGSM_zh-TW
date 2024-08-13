@@ -133,8 +133,9 @@ namespace WindowsGSM.GameServer
             if (Directory.Exists(OldProfile))
             {
                 Notice = Notice + $"An Old Savegame found in {OldProfile}\n\n" +
-                        $"If you want to use it, you need to move/copy it manually to \n" +
+                        $"If you want to have it Inside WindowsGSM to have it all in one place move it to\n" +
                         $"servers/{serverData.ServerID}/serverfiles/userdata.\n" +
+                        $"and modify value \"UserDataFolder\" in serverconfig.xml to value \"userdata\"\n" +
                         $"If this is intentional, ignore this";
             }
 
