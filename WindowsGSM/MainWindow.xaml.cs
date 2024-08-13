@@ -825,7 +825,6 @@ namespace WindowsGSM
         private async Task SendCurrentPublicIPs()
         {
             string currentPublicIp = GetPublicIP();
-            Console.WriteLine("Check Public IP");
             foreach (ServerTable server in ServerGrid.Items.Cast<ServerTable>().ToList())
             {
                 try
@@ -1507,8 +1506,6 @@ namespace WindowsGSM
 
             var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
             await webhook.Send(server.ID, server.Game, "Webhook Test Alert", server.Name, server.IP, server.Port);
-
-            SendCurrentPublicIPs();
         }
 
         private void Button_ServerCommand_Click(object sender, RoutedEventArgs e)
