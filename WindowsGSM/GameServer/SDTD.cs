@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System;
+using WindowsGSM.GameServer.Query;
 
 namespace WindowsGSM.GameServer
 {
@@ -36,7 +37,7 @@ namespace WindowsGSM.GameServer
         public string StartPath = "7DaysToDieServer.exe";
         public bool AllowsEmbedConsole = true;
         public int PortIncrements = 1;
-        public dynamic QueryMethod = null;
+        public dynamic QueryMethod = new A2S();
 
         public string Port = "26900";
         public string QueryPort = "26900";
