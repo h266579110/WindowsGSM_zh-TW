@@ -93,6 +93,7 @@ namespace WindowsGSM
             public string CPUAffinity;
 
             public bool EmbedConsole;
+            public bool ShowConsole;
             public bool AutoScroll;
             
             //runntime member to determine if public Ip changed
@@ -797,6 +798,7 @@ namespace WindowsGSM
             _serverMetadata[i].CPUAffinity = serverConfig.CPUAffinity;
 
             _serverMetadata[i].EmbedConsole = serverConfig.EmbedConsole;
+            _serverMetadata[i].ShowConsole = serverConfig.ShowConsole;
             _serverMetadata[i].AutoScroll = serverConfig.AutoScroll;
         }
 
@@ -1620,10 +1622,16 @@ namespace WindowsGSM
             if (p == null) { return; }
 
             //If console is useless, return
-            if (p.StartInfo.RedirectStandardOutput) { return; }
+            //if (p.StartInfo.RedirectStandardOutput) { return; }
+            _serverMetadata[int.Parse(server.ID)].ShowConsole = !_serverMetadata[int.Parse(server.ID)].ShowConsole;
+            ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ShowConsole, GetServerMetadata(server.ID).ShowConsole ? "1" : "0");
 
+            WindowShowStyle style = _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide;
             IntPtr hWnd = GetServerMetadata(server.ID).MainWindow;
-            ShowWindow(hWnd, ShowWindow(hWnd, WindowShowStyle.Hide) ? WindowShowStyle.Hide : WindowShowStyle.ShowNormal);
+
+            //ShowWindow(hWnd, ShowWindow(hWnd, WindowShowStyle.Hide) ? WindowShowStyle.Hide : WindowShowStyle.ShowNormal);
+            ShowWindow(hWnd, WindowShowStyle.Hide);
+            ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
         }
 
         private async void Actions_StartAllServers_Click(object sender, RoutedEventArgs e)
@@ -1889,10 +1897,8 @@ namespace WindowsGSM
 
                     p.WaitForInputIdle();
 
-                    if (!p.StartInfo.CreateNoWindow)
-                    {
-                        ShowWindow(p.MainWindowHandle, WindowShowStyle.Hide);
-                    }
+                    ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
+
                 }
                 catch
                 {
@@ -1933,7 +1939,7 @@ namespace WindowsGSM
 
             SetWindowText(p.MainWindowHandle, server.Name);
 
-            ShowWindow(p.MainWindowHandle, WindowShowStyle.Hide);
+            ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
 
             StartAutoUpdateCheck(server);
 
