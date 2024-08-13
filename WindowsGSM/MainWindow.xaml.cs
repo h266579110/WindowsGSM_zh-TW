@@ -28,6 +28,7 @@ using Label = System.Windows.Controls.Label;
 using Orientation = System.Windows.Controls.Orientation;
 using System.Windows.Documents;
 using MessageBox = System.Windows.MessageBox;
+using WindowsGSM.Properties;
 
 namespace WindowsGSM
 {
@@ -81,6 +82,7 @@ namespace WindowsGSM
             public bool AutoUpdateAlert;
             public bool RestartCrontabAlert;
             public bool CrashAlert;
+            public bool AutoIpUpdateAlert;
 
             // Restart Crontab Settings
             public bool RestartCrontab;
@@ -92,6 +94,9 @@ namespace WindowsGSM
 
             public bool EmbedConsole;
             public bool AutoScroll;
+            
+            //runntime member to determine if public Ip changed
+            public string CurrentPublicIp;
         }
 
         private enum WindowShowStyle : uint
@@ -363,6 +368,8 @@ namespace WindowsGSM
             StartServerTableRefresh();
 
             StartDashBoardRefresh();
+
+            StartAutpIpUpdate();
         }
 
         private Process GetConsoleProcess(int processId)
@@ -567,7 +574,7 @@ namespace WindowsGSM
             Process.Start(e.Uri.AbsoluteUri);
         }
 
-        private async void ImportPlugin_Click(object sender, RoutedEventArgs e) 
+        private async void ImportPlugin_Click(object sender, RoutedEventArgs e)
         {
             // If a server is installing or import => return
             if (progressbar_InstallProgress.IsIndeterminate || progressbar_ImportProgress.IsIndeterminate)
@@ -777,6 +784,7 @@ namespace WindowsGSM
             _serverMetadata[i].AutoRestartAlert = serverConfig.AutoRestartAlert;
             _serverMetadata[i].AutoStartAlert = serverConfig.AutoStartAlert;
             _serverMetadata[i].AutoUpdateAlert = serverConfig.AutoUpdateAlert;
+            _serverMetadata[i].AutoIpUpdateAlert = serverConfig.AutoIpUpdate;
             _serverMetadata[i].RestartCrontabAlert = serverConfig.RestartCrontabAlert;
             _serverMetadata[i].CrashAlert = serverConfig.CrashAlert;
 
@@ -811,6 +819,34 @@ namespace WindowsGSM
                         }
                     }
                 }
+            }
+        }
+
+        private async Task SendCurrentPublicIPs()
+        {
+            string currentPublicIp = GetPublicIP();
+            Console.WriteLine("Check Public IP");
+            foreach (ServerTable server in ServerGrid.Items.Cast<ServerTable>().ToList())
+            {
+                try
+                {
+                    int serverId = int.Parse(server.ID);
+                    Process p = GetServerMetadata(server.ID).Process;
+                    if (GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started || GetServerMetadata(server.ID).ServerStatus == ServerStatus.Starting) //GetServerMetadata(serverId).AutoStart
+                    {
+
+                        if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(server.ID).AutoIpUpdateAlert)//&& GetServerMetadata(serverId).AutoStartAlert)  //add Option for it
+                        {
+                            if (_serverMetadata[serverId].CurrentPublicIp == string.Empty || _serverMetadata[serverId].CurrentPublicIp != currentPublicIp)
+                            {
+                                var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                                await webhook.Send(server.ID, server.Game, "Current Public IP", server.Name, currentPublicIp, server.Port);
+                                _serverMetadata[serverId].CurrentPublicIp = currentPublicIp;
+                            }
+                        }
+                    }
+                }
+                catch (Exception){}
             }
         }
 
@@ -904,7 +940,7 @@ namespace WindowsGSM
 
         public int GetActivePlayers()
         {
-            return ServerGrid.Items.Cast<ServerTable>().Where(s => s.Maxplayers != null && s.Maxplayers.Contains('/')).Sum(s => int.TryParse(s.Maxplayers.Split('/')[0], out int count) ? count : 0 );
+            return ServerGrid.Items.Cast<ServerTable>().Where(s => s.Maxplayers != null && s.Maxplayers.Contains('/')).Sum(s => int.TryParse(s.Maxplayers.Split('/')[0], out int count) ? count : 0);
         }
 
         private void Refresh_DashBoard_LiveChart()
@@ -1471,6 +1507,8 @@ namespace WindowsGSM
 
             var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
             await webhook.Send(server.ID, server.Game, "Webhook Test Alert", server.Name, server.IP, server.Port);
+
+            SendCurrentPublicIPs();
         }
 
         private void Button_ServerCommand_Click(object sender, RoutedEventArgs e)
@@ -2425,6 +2463,19 @@ namespace WindowsGSM
         }
 
         const int UPDATE_INTERVAL_MINUTE = 30;
+        const int IP_UPDATE_INTERVAL_MINUTE = 2;
+        private async void StartAutpIpUpdate()
+        {
+            await Task.Run(async () =>
+            {
+                await Task.Delay(30000); //delay initial check so the servers can start
+                while (true)
+                {
+                    await SendCurrentPublicIPs();
+                    await Task.Delay(60000 * IP_UPDATE_INTERVAL_MINUTE); //check every minute
+                }
+            });
+        }
         private async void StartAutoUpdateCheck(ServerTable server)
         {
             int serverId = int.Parse(server.ID);
@@ -3391,7 +3442,7 @@ namespace WindowsGSM
         }
         #endregion
 
-        private string GetPublicIP()
+        public static string GetPublicIP()
         {
             try
             {
@@ -3636,6 +3687,14 @@ namespace WindowsGSM
             if (server == null) { return; }
             _serverMetadata[int.Parse(server.ID)].CrashAlert = MahAppSwitch_CrashAlert.IsOn;
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.CrashAlert, GetServerMetadata(server.ID).CrashAlert ? "1" : "0");
+        }
+
+        private void Switch_AutoIpUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            var server = (ServerTable)ServerGrid.SelectedItem;
+            if (server == null) { return; }
+            _serverMetadata[int.Parse(server.ID)].AutoIpUpdateAlert = MahAppSwitch_AutoIpUpdate.IsOn;
+            ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.AutoIpUpdateAlert, GetServerMetadata(server.ID).AutoIpUpdateAlert ? "1" : "0");
         }
         #endregion
 
