@@ -1622,8 +1622,7 @@ namespace WindowsGSM
             if (p == null) { return; }
 
             //If console is useless, return
-            if (p.StartInfo.RedirectStandardOutput) { return; }
-            
+            //if (p.StartInfo.RedirectStandardOutput) { return; }
             _serverMetadata[int.Parse(server.ID)].ShowConsole = !_serverMetadata[int.Parse(server.ID)].ShowConsole;
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ShowConsole, GetServerMetadata(server.ID).ShowConsole ? "1" : "0");
 

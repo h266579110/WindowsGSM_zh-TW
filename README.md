@@ -111,6 +111,7 @@ Allow support more game servers by installing plugins!
   * **Deathreus** - *Code optimization* - [Deathreus](https://github.com/Deathreus)
   * **! AssaultLine** - *Mordhau server test*
   * **Dennis** - *Mordhau server test*
+  * **Raziel** - *Various small improvements and external Plugins*
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/WindowsGSM/WindowsGSM/blob/master/LICENSE) file for details
