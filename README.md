@@ -113,6 +113,12 @@ Allow support more game servers by installing plugins!
   * **Dennis** - *Mordhau server test*
   * **Raziel** - *Various small improvements and external Plugins*
 
+### Give Love!
+If you like to thank me for the help over at the discord or the small changes here, feel free:
+[Buy me a coffee](https://ko-fi.com/raziel7893)
+[Paypal](https://paypal.me/raziel7893)
+
+
 ### License
 This project is licensed under the MIT License - see the [LICENSE.md](https://github.com/WindowsGSM/WindowsGSM/blob/master/LICENSE) file for details
 
