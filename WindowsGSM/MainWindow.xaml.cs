@@ -29,6 +29,9 @@ using Orientation = System.Windows.Controls.Orientation;
 using System.Windows.Documents;
 using MessageBox = System.Windows.MessageBox;
 using WindowsGSM.Properties;
+using static System.Net.Mime.MediaTypeNames;
+using System.Globalization;
+using ControlzEx.Standard;
 
 namespace WindowsGSM
 {
@@ -215,8 +218,14 @@ namespace WindowsGSM
                 }
             }
 
-            Height = (key.GetValue(RegistryKeyName.Height) == null) ? Height : double.Parse(key.GetValue(RegistryKeyName.Height).ToString());
-            Width = (key.GetValue(RegistryKeyName.Width) == null) ? Width : double.Parse(key.GetValue(RegistryKeyName.Width).ToString());
+            //double.parse can throw when the user changes locale after WindowsGsm setup
+            //Height = (key.GetValue(RegistryKeyName.Height) == null) ? Height : double.Parse(key.GetValue(RegistryKeyName.Height).ToString());
+            //Width = (key.GetValue(RegistryKeyName.Width) == null) ? Width : double.Parse(key.GetValue(RegistryKeyName.Width).ToString());
+            var regValue = 0.0;
+            if (InvariantTryParse(key.GetValue(RegistryKeyName.Height).ToString(), out regValue))
+                Height = regValue;
+            if (InvariantTryParse(key.GetValue(RegistryKeyName.Width).ToString(), out regValue))
+                Width = regValue;
             key.Close();
 
             RenderOptions.ProcessRenderMode = MahAppSwitch_HardWareAcceleration.IsOn ? System.Windows.Interop.RenderMode.SoftwareOnly : System.Windows.Interop.RenderMode.Default;
@@ -1956,6 +1965,11 @@ namespace WindowsGSM
             }
 
             return gameServer;
+        }
+
+        private bool InvariantTryParse(string input, out double value)
+        {
+            return double.TryParse(input.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
         }
 
         private async Task<bool> Server_BeginStop(ServerTable server, Process p)
