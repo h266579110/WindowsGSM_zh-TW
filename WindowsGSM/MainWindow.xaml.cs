@@ -3940,7 +3940,7 @@ namespace WindowsGSM
             return server?.Name ?? string.Empty;
         }
 
-        private ServerTable GetServerTableById(string serverId)
+        public ServerTable GetServerTableById(string serverId)
         {
             for (int i = 0; i < ServerGrid.Items.Count; i++)
             {

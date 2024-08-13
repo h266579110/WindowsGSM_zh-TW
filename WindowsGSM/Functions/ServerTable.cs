@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace WindowsGSM.Functions
 {
-    class ServerTable
+    public class ServerTable
     {
         public string ID { get; set; }
         public string PID { get; set; }
