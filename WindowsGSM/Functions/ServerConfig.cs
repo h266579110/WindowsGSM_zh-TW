@@ -227,7 +227,7 @@ namespace WindowsGSM.Functions
                     textwriter.WriteLine($"{SettingName.AutoUpdateAlert}=\"1\"");
                     textwriter.WriteLine($"{SettingName.RestartCrontabAlert}=\"1\"");
                     textwriter.WriteLine($"{SettingName.CrashAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.AutoIpUpdateAlert}=\"1\"");
+                    textwriter.WriteLine($"{SettingName.AutoIpUpdateAlert}=\"0\"");
                 }
 
                 return true;

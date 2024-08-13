@@ -832,10 +832,10 @@ namespace WindowsGSM
                 {
                     int serverId = int.Parse(server.ID);
                     Process p = GetServerMetadata(server.ID).Process;
-                    if (GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started || GetServerMetadata(server.ID).ServerStatus == ServerStatus.Starting) //GetServerMetadata(serverId).AutoStart
+                    if (GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started || GetServerMetadata(server.ID).ServerStatus == ServerStatus.Starting) 
                     {
 
-                        if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(server.ID).AutoIpUpdateAlert)//&& GetServerMetadata(serverId).AutoStartAlert)  //add Option for it
+                        if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(server.ID).AutoIpUpdateAlert)
                         {
                             if (_serverMetadata[serverId].CurrentPublicIp == string.Empty || _serverMetadata[serverId].CurrentPublicIp != currentPublicIp)
                             {
