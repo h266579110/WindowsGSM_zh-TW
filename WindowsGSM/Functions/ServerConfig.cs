@@ -29,6 +29,7 @@ namespace WindowsGSM.Functions
             public const string RestartCrontab = "restartcrontab";
             public const string CrontabFormat = "crontabformat";
             public const string EmbedConsole = "embedconsole";
+            public const string ShowConsole = "showconsole";
             public const string AutoStartAlert = "autostartalert";
             public const string AutoRestartAlert = "autorestartalert";
             public const string AutoUpdateAlert = "autoupdatealert";
@@ -61,6 +62,7 @@ namespace WindowsGSM.Functions
         public bool RestartCrontab;
         public string CrontabFormat;
         public bool EmbedConsole;
+        public bool ShowConsole;
         public bool AutoStartAlert;
         public bool AutoRestartAlert;
         public bool AutoUpdateAlert;
@@ -133,6 +135,7 @@ namespace WindowsGSM.Functions
                             case SettingName.RestartCrontab: RestartCrontab = keyvalue[1] == "1"; break;
                             case SettingName.CrontabFormat: CrontabFormat = keyvalue[1]; break;
                             case SettingName.EmbedConsole: EmbedConsole = keyvalue[1] == "1"; break;
+                            case SettingName.ShowConsole: ShowConsole = keyvalue[1] == "1"; break;
                             case SettingName.AutoStartAlert: AutoStartAlert = keyvalue[1] == "1"; break;
                             case SettingName.AutoRestartAlert: AutoRestartAlert = keyvalue[1] == "1"; break;
                             case SettingName.AutoUpdateAlert: AutoUpdateAlert = keyvalue[1] == "1"; break;
@@ -160,6 +163,7 @@ namespace WindowsGSM.Functions
             ServerGSLT = string.Empty;
             ServerParam = gameServer.Additional;
             EmbedConsole = false;
+            ShowConsole = false;
 
             AutoRestart = false;
             AutoStart = false;
@@ -220,6 +224,7 @@ namespace WindowsGSM.Functions
                     textwriter.WriteLine($"{SettingName.CrontabFormat}=\"{CrontabFormat}\"");
                     textwriter.WriteLine(string.Empty);
                     textwriter.WriteLine($"{SettingName.EmbedConsole}=\"{(EmbedConsole ? "1" : "0")}\"");
+                    textwriter.WriteLine($"{SettingName.ShowConsole}=\"{(ShowConsole? "1" : "0")}\"");
                     textwriter.WriteLine($"{SettingName.AutoScroll}=\"{(AutoScroll ? "1" : "0")}\"");
                     textwriter.WriteLine(string.Empty);
                     textwriter.WriteLine($"{SettingName.AutoStartAlert}=\"1\"");
