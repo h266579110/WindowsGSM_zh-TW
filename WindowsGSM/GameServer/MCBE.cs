@@ -58,7 +58,7 @@ namespace WindowsGSM.GameServer
                 configText = configText.Replace("{{max-players}}", Maxplayers);
                 string tempPort = _serverData.ServerPort;
                 configText = configText.Replace("{{server-port}}", tempPort);
-                configText = configText.Replace("{{server-portv6}}", (int.Parse(tempPort)+1).ToString());
+                configText = configText.Replace("{{server-portv6}}", (int.Parse(tempPort) + 1).ToString());
                 configText = configText.Replace("{{level-name}}", Defaultmap);
                 File.WriteAllText(configPath, configText);
             }
@@ -235,12 +235,15 @@ namespace WindowsGSM.GameServer
                         {
                             if (Directory.Exists(Path.Combine(serverFilesPath, folder)))
                             {
-                                Directory.Delete(Path.Combine(serverFilesPath, folder),true);
+                                Directory.Delete(Path.Combine(serverFilesPath, folder), true);
                             }
                         }
+
                         File.Delete(Path.Combine(serverFilesPath, "bedrock_server.exe"));
-                        File.Delete(Path.Combine(serverFilesPath, "bedrock_server.pdb"));
-                        File.Delete(Path.Combine(serverFilesPath, "release-notes.txt"));
+                        if (File.Exists(Path.Combine(serverFilesPath, "bedrock_server.pdb")))
+                            File.Delete(Path.Combine(serverFilesPath, "bedrock_server.pdb"));
+                        if (File.Exists(Path.Combine(serverFilesPath, "release-notes.txt")))
+                            File.Delete(Path.Combine(serverFilesPath, "release-notes.txt"));
                     });
 
                     //Move folder and files
@@ -253,9 +256,12 @@ namespace WindowsGSM.GameServer
                                 Directory.Move(Path.Combine(serverFilesPath, "__temp", folder), Path.Combine(serverFilesPath, folder));
                             }
                         }
+
                         File.Move(Path.Combine(serverFilesPath, "__temp", "bedrock_server.exe"), Path.Combine(serverFilesPath, "bedrock_server.exe"));
-                        File.Move(Path.Combine(serverFilesPath, "__temp", "bedrock_server.pdb"), Path.Combine(serverFilesPath, "bedrock_server.pdb"));
-                        File.Move(Path.Combine(serverFilesPath, "__temp", "release-notes.txt"), Path.Combine(serverFilesPath, "release-notes.txt"));
+                        if (File.Exists(Path.Combine(serverFilesPath, "__temp", "bedrock_server.pdb")))
+                            File.Move(Path.Combine(serverFilesPath, "__temp", "bedrock_server.pdb"), Path.Combine(serverFilesPath, "bedrock_server.pdb"));
+                        if (File.Exists(Path.Combine(serverFilesPath, "__temp", "release-notes.txt")))
+                            File.Move(Path.Combine(serverFilesPath, "__temp", "release-notes.txt"), Path.Combine(serverFilesPath, "release-notes.txt"));
                     });
 
                     //Delete __temp folder
@@ -292,9 +298,10 @@ namespace WindowsGSM.GameServer
             {
                 return File.ReadAllText(versionPath);
             }
-            else { 
-                Error = $"Fail to get local build"; 
-                return string.Empty; 
+            else
+            {
+                Error = $"Fail to get local build";
+                return string.Empty;
             }
         }
 
