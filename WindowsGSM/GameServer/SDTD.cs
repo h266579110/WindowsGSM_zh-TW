@@ -95,6 +95,11 @@ namespace WindowsGSM.GameServer
                         //it is not good to have the serverdata in %AppData% as the user will forget it, as nearly all windowsgsm servers store it inside the WindosGSM structure
                         //also the backup function would be useless without
                         sb.AppendLine($"<property name=\"UserDataFolder\"\t\t\t\tvalue=\"userdata\" />");
+                    else if (line.Contains("=\"GameName\""))
+                        //Move WorldData to local windowsGSM installation.
+                        //it is not good to have the serverdata in %AppData% as the user will forget it, as nearly all windowsgsm servers store it inside the WindosGSM structure
+                        //also the backup function would be useless without
+                        sb.AppendLine($"<property name=\"GameName\"\t\t\t\t\t\tvalue=\"{serverData.ServerName}\"/>");
                     else
                         sb.AppendLine(line);
 
