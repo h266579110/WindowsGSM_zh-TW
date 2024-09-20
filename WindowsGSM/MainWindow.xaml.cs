@@ -1642,7 +1642,7 @@ namespace WindowsGSM
             //ShowWindow(hWnd, ShowWindow(hWnd, WindowShowStyle.Hide) ? WindowShowStyle.Hide : WindowShowStyle.ShowNormal);
             ShowWindow(hWnd, WindowShowStyle.Hide);
             Thread.Sleep(500);
-            ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
+            ShowWindow(hWnd, style);
         }
 
         private async void Actions_StartAllServers_Click(object sender, RoutedEventArgs e)
