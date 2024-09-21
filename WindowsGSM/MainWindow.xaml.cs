@@ -3037,7 +3037,7 @@ namespace WindowsGSM
                 StartInfo =
                 {
                     FileName = "schtasks",
-                    Arguments = enable ? $"/create /tn {taskName} /tr \"{wgsmPath}\" /sc onlogon /rl HIGHEST /f" : $"/delete /tn {taskName} /f",
+                    Arguments = enable ? $"/create /tn {taskName} /tr \"{wgsmPath}\" /sc onlogon /delay 0000:10 /rl HIGHEST /f" : $"/delete /tn {taskName} /f",
                     CreateNoWindow = true,
                     UseShellExecute = false
                 }
