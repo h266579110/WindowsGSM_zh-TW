@@ -172,7 +172,7 @@ namespace WindowsGSM.DiscordBot
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.StopServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
                             await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) {(started ? "Stopped" : "Fail to Stop")}.");
@@ -246,7 +246,7 @@ namespace WindowsGSM.DiscordBot
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             string sendCommand = command.Substring(args[1].Length + 6);
                             bool sent = await WindowsGSM.SendCommandById(args[1], sendCommand, message.Author.Id.ToString(), message.Author.Username);
