@@ -127,7 +127,8 @@ namespace WindowsGSM
             Backuping = 9,
             Restored = 10,
             Restoring = 11,
-            Deleting = 12
+            Deleting = 12,
+            Crashed = 13
         }
 
         public static readonly string WGSM_VERSION = "v" + string.Concat(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString().Reverse().Skip(2).Reverse());
@@ -148,6 +149,11 @@ namespace WindowsGSM
         private string g_DonorType = string.Empty;
 
         private readonly DiscordBot.Bot g_DiscordBot = new DiscordBot.Bot();
+
+        private long _lastAutoRestartTime = 0;
+        private long _lastCrashTime = 0;
+        private const long _webhookThresholdTimeInMs = 6000*5;
+        private ServerStatus _latestWebhookSend = ServerStatus.Stopped;
 
         public MainWindow(bool showCrashHint)
         {
@@ -828,11 +834,13 @@ namespace WindowsGSM
                         {
                             var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
                             await webhook.Send(server.ID, server.Game, "Started | Auto Start", server.Name, server.IP, server.Port);
+                            _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
                         }
                     }
                 }
             }
         }
+
 
         private async Task SendCurrentPublicIPs()
         {
@@ -2439,8 +2447,12 @@ namespace WindowsGSM
 
                     if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).CrashAlert)
                     {
-                        var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
-                        await webhook.Send(server.ID, server.Game, "Crashed", server.Name, server.IP, server.Port);
+                        if (CheckWebhookThreshold(ref _lastCrashTime) || _latestWebhookSend != ServerStatus.Crashed)
+                        {
+                            var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                            await webhook.Send(server.ID, server.Game, "Crashed", server.Name, server.IP, server.Port);
+                            _latestWebhookSend = ServerStatus.Crashed;
+                        }
                     }
 
                     _serverMetadata[int.Parse(server.ID)].Process = null;
@@ -2476,8 +2488,13 @@ namespace WindowsGSM
 
                         if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).AutoRestartAlert)
                         {
-                            var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
-                            await webhook.Send(server.ID, server.Game, "Restarted | Auto Restart", server.Name, server.IP, server.Port);
+                            //Only send Webhook_Start if there wasn't a retry in the last X min
+                            if (CheckWebhookThreshold(ref _lastAutoRestartTime))
+                            {
+                                var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                                await webhook.Send(server.ID, server.Game, "Restarted | Auto Restart", server.Name, server.IP, server.Port);
+                                _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
+                            }
                         }
                     }
                 }
@@ -2569,6 +2586,7 @@ namespace WindowsGSM
                             {
                                 var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
                                 await webhook.Send(server.ID, server.Game, "Updated | Auto Update", server.Name, server.IP, server.Port);
+                                _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
                             }
                         }
                         else
@@ -2668,6 +2686,7 @@ namespace WindowsGSM
                         {
                             var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
                             await webhook.Send(server.ID, server.Game, "Restarted | Restart Crontab", server.Name, server.IP, server.Port);
+                            _latestWebhookSend = ServerStatus.Restarted;
                         }
 
                         break;
@@ -3898,6 +3917,23 @@ namespace WindowsGSM
                 listBox_DiscordBotAdminList.Items.Add(new DiscordBot.AdminListItem { AdminId = adminID, ServerIds = serverIDs });
             }
             listBox_DiscordBotAdminList.SelectedIndex = listBox_DiscordBotAdminList.Items.Count >= 0 ? selectIndex : -1;
+        }
+
+        private bool CheckWebhookThreshold(ref long lastWebhookTimeInMs)
+        {
+            bool ret = false;
+            //init counter
+            if(lastWebhookTimeInMs == 0)
+            {
+                lastWebhookTimeInMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                return true;
+            }
+            if ((DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastWebhookTimeInMs) > _webhookThresholdTimeInMs)
+                ret = true;
+
+            //reset counter
+            lastWebhookTimeInMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            return ret;
         }
 
         public int GetServerCount()
