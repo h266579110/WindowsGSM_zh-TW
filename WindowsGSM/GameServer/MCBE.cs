@@ -155,11 +155,12 @@ namespace WindowsGSM.GameServer
                 using (WebClient webClient = new MCBEWebclient())
                 {
                     string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
-                    Regex regex = new Regex(@"https:\/\/minecraft\.azureedge\.net\/bin-win\/(bedrock-server-(.*?)\.zip)");
+                    Regex regex = new Regex(@"https:\/\/www.minecraft\.net\/bedrockdedicatedserver\/bin-win\/(bedrock-server-(.*?)\.zip)");
                     var matches = regex.Matches(html);
 
                     if (matches.Count <= 0)
                     {
+                        Error = "could not find BedrockServer versions";
                         return null;
                     }
 
