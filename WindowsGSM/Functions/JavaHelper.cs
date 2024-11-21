@@ -9,12 +9,10 @@ namespace WindowsGSM.Functions
 {
     public class JavaHelper
     {
+        private static string JreInstallFileName = $"jdk-22.0.2_windows-x64_bin.exe";
         private static string JavaAbsoluteInstallPath = Path.Combine(GetProgramFilesAbsolutePath(), "Java");
-        private static string JreAbsoluteInstallPath = Path.Combine(JavaAbsoluteInstallPath, "jre1.8.0_241");
-        private static string JreInstallFileName = $"jre-8u241-windows-{(Environment.Is64BitOperatingSystem ? "x64" : "i586")}.exe";
-        private static string JreDownloadLink = Environment.Is64BitOperatingSystem ?
-                "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=241536_1f5b5a70bf22433b84d0e960903adac8" :
-                "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=241534_1f5b5a70bf22433b84d0e960903adac8";
+        private static string JreAbsoluteInstallPath = Path.Combine(JavaAbsoluteInstallPath, "jdk-22");
+        private static string JreDownloadLink = "https://download.oracle.com/java/22/archive/jdk-22.0.2_windows-x64_bin.exe";
 
         public struct JREDownloadTaskResult : IEquatable<JREDownloadTaskResult>
         {
