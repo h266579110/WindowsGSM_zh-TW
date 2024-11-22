@@ -51,6 +51,7 @@ namespace WindowsGSM.GameServer
             param += string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $" -QueryPort={_serverData.ServerQueryPort}";
             param += string.IsNullOrWhiteSpace(_serverData.ServerIP) ? string.Empty : $" -MultiHome={_serverData.ServerIP}";
             param += string.IsNullOrWhiteSpace(_serverData.ServerName) ? string.Empty : $" -hostname={_serverData.ServerName}";
+            param += string.IsNullOrWhiteSpace(_serverData.ServerName) ? string.Empty : $" -GSLTToken={_serverData.ServerGSLT}";
             param += !AllowsEmbedConsole ? " -log" : string.Empty;
 
             Process p;
