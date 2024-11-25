@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Collections.Generic;
 using System;
+using WindowsGSM.Functions;
 
 namespace WindowsGSM.GameServer
 {
@@ -41,6 +42,8 @@ namespace WindowsGSM.GameServer
         public string Defaultmap = "Bedrock level";
         public string Maxplayers = "10";
         public string Additional = string.Empty;
+
+        public string RegexString = @"https:\/\/www.minecraft\.net\/bedrockdedicatedserver\/bin-win\/(bedrock-server-(.*?)\.zip)";
 
         public MCBE(Functions.ServerConfig serverData)
         {
@@ -82,61 +85,62 @@ namespace WindowsGSM.GameServer
                 return null;
             }
 
-            Process p;
-            if (!AllowsEmbedConsole)
+            var p = new Process
             {
-                p = new Process
+                StartInfo =
                 {
-                    StartInfo =
-                    {
-                        WorkingDirectory = workingDir,
-                        FileName = exePath,
-                        WindowStyle = ProcessWindowStyle.Minimized,
-                    },
-                    EnableRaisingEvents = true
-                };
-                p.Start();
-            }
-            else
+                    CreateNoWindow = false,
+                    WorkingDirectory = ServerPath.GetServersServerFiles(_serverData.ServerID),
+                    FileName = exePath,
+                    WindowStyle = ProcessWindowStyle.Minimized,
+                    UseShellExecute = false,
+                },
+                EnableRaisingEvents = true
+            };
+
+            // Set up Redirect Input and Output to WindowsGSM Console if EmbedConsole is on
+            if (_serverData.EmbedConsole)
             {
-                p = new Process
-                {
-                    StartInfo =
-                    {
-                        WorkingDirectory = workingDir,
-                        FileName = exePath,
-                        WindowStyle = ProcessWindowStyle.Minimized,
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        RedirectStandardInput = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    },
-                    EnableRaisingEvents = true
-                };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                p.StartInfo.RedirectStandardInput = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                p.StartInfo.CreateNoWindow = true;
+                var serverConsole = new ServerConsole(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
-                p.Start();
-                p.BeginOutputReadLine();
-                p.BeginErrorReadLine();
             }
 
-            return p;
+            // Start Process
+            try
+            {
+                p.Start();
+                if (_serverData.EmbedConsole)
+                {
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+                }
+                return p;
+            }
+            catch (Exception e)
+            {
+                Error = e.Message;
+                return null; // return null if fail to start
+            }
         }
 
         public async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
-                if (p.StartInfo.RedirectStandardInput)
-                {
-                    p.StandardInput.WriteLine("stop");
-                }
-                else
-                {
-                    Functions.ServerConsole.SendMessageToMainWindow(p.MainWindowHandle, "stop");
-                }
+                Functions.ServerConsole.SetMainWindow(p.MainWindowHandle);
+                Functions.ServerConsole.SendWaitToMainWindow("stop");
+                Functions.ServerConsole.SendWaitToMainWindow("{ENTER}");
+                p.WaitForExit(4000);
+                p.CloseMainWindow();
+                p.WaitForExit(500);
+                if (!p.HasExited)
+                    p.Kill();
             });
         }
 
@@ -155,7 +159,7 @@ namespace WindowsGSM.GameServer
                 using (WebClient webClient = new MCBEWebclient())
                 {
                     string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
-                    Regex regex = new Regex(@"https:\/\/www.minecraft\.net\/bedrockdedicatedserver\/bin-win\/(bedrock-server-(.*?)\.zip)");
+                    Regex regex = new Regex(RegexString);
                     var matches = regex.Matches(html);
 
                     if (matches.Count <= 0)
@@ -195,7 +199,7 @@ namespace WindowsGSM.GameServer
                     string remoteBuild = await GetRemoteBuild();
 
                     string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
-                    Regex regex = new Regex(@"https:\/\/minecraft\.azureedge\.net\/bin-win\/(bedrock-server-(.*?)\.zip)");
+                    Regex regex = new Regex(RegexString);
                     var matches = regex.Matches(html);
 
                     if (matches.Count <= 0)
@@ -313,7 +317,8 @@ namespace WindowsGSM.GameServer
                 using (WebClient webClient = new MCBEWebclient())
                 {
                     string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
-                    Regex regex = new Regex(@"https:\/\/minecraft\.azureedge\.net\/bin-win\/(bedrock-server-(.*?)\.zip)");
+
+                    Regex regex = new Regex(RegexString);
                     var matches = regex.Matches(html);
 
                     if (matches.Count > 0)
