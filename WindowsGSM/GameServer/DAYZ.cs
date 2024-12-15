@@ -33,7 +33,7 @@ namespace WindowsGSM.GameServer
         public bool loginAnonymous = false;
 
         public string Port = "2302";
-        public string QueryPort = "27016";
+        public string QueryPort = "2305";
         public string Defaultmap = "dayzOffline.chernarusplus";
         public string Maxplayers = "60";
         public string Additional = "-config=serverDZ.cfg -doLogs -adminLog -netLog -profiles=profile";
@@ -54,9 +54,10 @@ namespace WindowsGSM.GameServer
                 StringBuilder configText = new StringBuilder( File.ReadAllText(configPath));
                 configText = configText.Replace("{{hostname}}", _serverData.ServerName);
                 configText = configText.Replace("{{maxplayers}}", Maxplayers);
-                configText.AppendLine("steamProtocolMaxDataSize = 4000;"); //should allow for more mods as this somehow affects how many parameters can be added via commandline 
+                configText.AppendLine("steamProtocolMaxDataSize = 4000; //should allow for more mods as this somehow affects how many parameters can be added via commandline "); 
                 configText.AppendLine("enableCfgGameplayFile = 0;");
                 configText.AppendLine("logFile = \"server_console.log\";");
+                configText.AppendLine($"steamQueryPort = {QueryPort};            // defines Steam query port,"); 
                 File.WriteAllText(configPath, configText.ToString());
             }
         }
