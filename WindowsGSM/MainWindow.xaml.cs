@@ -28,10 +28,7 @@ using Label = System.Windows.Controls.Label;
 using Orientation = System.Windows.Controls.Orientation;
 using System.Windows.Documents;
 using MessageBox = System.Windows.MessageBox;
-using WindowsGSM.Properties;
-using static System.Net.Mime.MediaTypeNames;
 using System.Globalization;
-using ControlzEx.Standard;
 using System.Threading;
 
 namespace WindowsGSM
@@ -3278,7 +3275,7 @@ namespace WindowsGSM
             {
                 var webRequest = WebRequest.Create("https://api.github.com/repos/WindowsGSM/WindowsGSM/releases/latest") as HttpWebRequest;
                 webRequest.Method = "GET";
-                webRequest.UserAgent = "Anything";
+                webRequest.Headers["User-Agent"] = "Anything";
                 webRequest.ServicePoint.Expect100Continue = false;
                 var response = await webRequest.GetResponseAsync();
                 using (var responseReader = new StreamReader(response.GetResponseStream()))
