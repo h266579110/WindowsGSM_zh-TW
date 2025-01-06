@@ -2674,7 +2674,13 @@ namespace WindowsGSM
                         Log(server.ID, "Action: Restart");
                         SetServerStatus(server, "Restarting");
 
-                        await Server_BeginStop(server, p);
+                        await Server_BeginStop(server, p); 
+                        
+                        if (GetServerMetadata(server.ID).UpdateOnStart)
+                        {
+                            await GameServer_Update(server, " | Update on Start");
+                        }
+
                         var gameServer = await Server_BeginStart(server);
                         if (gameServer == null) { return; }
 
