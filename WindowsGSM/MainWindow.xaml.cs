@@ -2145,7 +2145,14 @@ namespace WindowsGSM
 
             await Server_BeginStop(server, p);
 
-            await Task.Delay(1000);
+            await Task.Delay(500);
+
+            if (GetServerMetadata(server.ID).UpdateOnStart)
+            {
+                await GameServer_Update(server, " | Update on Start");
+            }
+
+            await Task.Delay(500);
 
             var gameServer = await Server_BeginStart(server);
             if (gameServer == null)
