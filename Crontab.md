@@ -18,6 +18,7 @@ Example for sending Commands:
 Example for additional Restarts besides the Gui defined one:
 > 2 * * *;restart
 
+### Notes
 Make sure none of the crontabs overlapp too much. Exec programms will only be stopped on the Restart of that server, so make sure the programms do not run continously.
 
 The config Folder is Admin only Protected, as this would allow an easy rights escalation
