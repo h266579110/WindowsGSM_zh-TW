@@ -375,6 +375,7 @@
     <Compile Include="Functions\BackupConfig.cs" />
     <Compile Include="Functions\CPU\Affinity.cs" />
     <Compile Include="Functions\CPU\Priority.cs" />
+    <Compile Include="Functions\CrontabManager.cs" />
     <Compile Include="Functions\DirectoryManagement.cs" />
     <Compile Include="Functions\FileManagement.cs" />
     <Compile Include="Functions\Github.cs" />
