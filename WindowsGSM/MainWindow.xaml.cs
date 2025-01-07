@@ -2771,18 +2771,13 @@ namespace WindowsGSM
             string title = int.TryParse(serverId, out int i) ? $"#{i.ToString()}" : serverId;
             string log = $"[{DateTime.Now.ToString("MM/dd/yyyy-HH:mm:ss")}][{title}] {logText}" + Environment.NewLine;
             string logPath = ServerPath.GetLogs();
-            if (debug) Console.WriteLine("Debug1");
             Directory.CreateDirectory(logPath);
             string logFile = Path.Combine(logPath, $"L{DateTime.Now.ToString("yyyyMMdd")}.log");
             File.AppendAllText(logFile, log);
-            if (debug) Console.WriteLine("Debug2");
 
             textBox_wgsmlog.AppendText(log);
-            if (debug) Console.WriteLine("Debug3");
             textBox_wgsmlog.Text = RemovedOldLog(textBox_wgsmlog.Text);
-            if (debug) Console.WriteLine("Debug4");
             textBox_wgsmlog.ScrollToEnd();
-            if (debug) Console.WriteLine("Debug5");
         }
 
         public void DiscordBotLog(string logText)

@@ -1,11 +1,15 @@
-﻿using NCrontab;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using NCrontab;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using WindowsGSM.Functions;
@@ -58,7 +62,27 @@ namespace WindowsGSM.Functions
             Server = server;
             Process = process;
 
+            CreateConfigDirectory();
             LoadCrontabConfig();
+        }
+
+        private void CreateConfigDirectory()
+        {
+            var configFolder = ServerPath.GetServersConfigs(Server.ID, "Crontab");
+            if (!Directory.Exists(configFolder))
+            {
+                var directory = Directory.CreateDirectory(configFolder);
+                //set readOnly
+                var admin = new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.BuiltinAdministratorsSid, null);
+                var directorySecurity = directory.GetAccessControl();
+
+                var administratorRule = new FileSystemAccessRule(admin, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow);
+
+                directorySecurity.SetAccessRuleProtection(true, false);
+                directorySecurity.AddAccessRule(administratorRule);
+
+                directory.SetAccessControl(directorySecurity);
+            }
         }
 
         public void LoadCrontabConfig()
@@ -148,7 +172,7 @@ namespace WindowsGSM.Functions
                 //execxute in a async task that runs simply in the background, as we don't want to miss any other scedules. could cause thread buildup, if something stupid is executed.
 
                 foreach (var next in nextOccurrences)
-                {            
+                {
                     //Return if crontab expression is invalid 
                     if (next.nextOccurrence == null) continue;
 
@@ -189,7 +213,7 @@ namespace WindowsGSM.Functions
                     runLoop = false; //thread will be killed soon, so stop this crontab instance
                     return;
                 case CrontabType.Exec:
-                    Window.Log(Server.ID,$"Execute Scedules: {entry.Command}");
+                    Window.Log(Server.ID, $"Execute Scedules: {entry.Command}");
                     runningBackgroundTasks.Add(ExecuteWindowsCommand(entry.Command, entry.Payload));
                     return;
                 case CrontabType.ServerConsoleCommand:

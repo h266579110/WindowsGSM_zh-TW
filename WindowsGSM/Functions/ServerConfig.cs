@@ -245,7 +245,6 @@ namespace WindowsGSM.Functions
         {
             Directory.CreateDirectory(ServerPath.GetServers(ServerID));
             Directory.CreateDirectory(ServerPath.GetServersConfigs(ServerID));
-            Directory.CreateDirectory(ServerPath.GetServersConfigs(ServerID, "Crontab"));
             Directory.CreateDirectory(ServerPath.GetServersServerFiles(ServerID));
         }
 
