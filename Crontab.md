@@ -1,4 +1,4 @@
-### Crontab Managing
+## Crontab Managing
 Improved Crontab Managing.
 Crontabs can now also Execute Windows commands and send Server Console Commands
 They can now be configured by adding *.csv files to the server config folder (servers%ServerID%\configs\Crontab)
@@ -22,5 +22,5 @@ Make sure none of the crontabs overlapp too much. Exec programms will only be st
 
 The config Folder is Admin only Protected, as this would allow an easy rights escalation
 
-## Crontab syntax
+### Crontab syntax
 https://crontab.guru/
