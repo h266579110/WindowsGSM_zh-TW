@@ -32,13 +32,13 @@ namespace WindowsGSM.DiscordBot
             var prefix = Configs.GetBotPrefix();
             var commandLen = prefix.Length + 4;
             if (message.Content.Length < commandLen) { return; }
-            if (message.Content.Length == commandLen && message.Content == $"{prefix}wgsm")
+            if (message.Content.Length == commandLen && message.Content.ToLower().Trim() == $"{prefix}wgsm".ToLower().Trim())
             {
                 await SendHelpEmbed(message);
                 return;
             }
 
-            if (message.Content.Length >= commandLen + 1 && message.Content.Substring(0, commandLen + 1) == $"{prefix}wgsm ")
+            if (message.Content.Length >= commandLen + 1 && message.Content.Substring(0, commandLen + 1).ToLower().Trim() == $"{prefix}wgsm ".ToLower().Trim())
             {
                 // Remote Actions
                 string[] args = message.Content.Split(new[] { ' ' }, 2);
