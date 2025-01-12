@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,7 +9,7 @@ using WindowsGSM.Functions;
 
 namespace WindowsGSM.GameServer.Query
 {
-    public class UT3
+    public class UT3 : QueryTemplate
     {
         private static readonly byte[] UT3_MAGIC = { 0xFE, 0xFD };
         private static readonly byte[] UT3_HANDSHAKE = { 0x09 };
@@ -116,6 +117,11 @@ namespace WindowsGSM.GameServer.Query
             {
                 return null;
             }
+        }
+
+        public async Task<List<PlayerData>> GetPlayersData()
+        {
+            return null;
         }
     }
 }

@@ -9,7 +9,7 @@ using WindowsGSM.Functions;
 
 namespace WindowsGSM.GameServer.Query
 {
-    public class A2S
+    public class A2S: QueryTemplate
     {
         private static readonly byte[] A2S_INFO = Encoding.Default.GetBytes("TSource Engine Query\0");
         private static readonly byte[] A2S_PLAYER = Encoding.Default.GetBytes("U");
@@ -177,7 +177,7 @@ namespace WindowsGSM.GameServer.Query
 
         /// <summary>Retrieves information about the players currently on the server.</summary>
         /// <returns>Returns (id, (name, score, timeConnected))</returns>
-        public async Task<Dictionary<int, (string, long, TimeSpan)>> GetPlayer()
+        public async Task<List<PlayerData>> GetPlayersData()
         {
             return await Task.Run(() =>
             {
@@ -210,7 +210,7 @@ namespace WindowsGSM.GameServer.Query
                     }
 
                     // Store response's data
-                    var keys = new Dictionary<int, (string, long, TimeSpan)>();
+                    var keys = new List<PlayerData>();
 
                     // Load response's data
                     using (var br = new BinaryReader(new MemoryStream(responseData), Encoding.UTF8))
@@ -225,7 +225,7 @@ namespace WindowsGSM.GameServer.Query
                             int score = br.ReadInt32();
                             TimeSpan timeConnected = TimeSpan.FromSeconds((int)br.ReadSingle());
 
-                            keys[i] = (name, score, timeConnected);
+                            keys.Add(new PlayerData(i, name, score, timeConnected));
                         }
                     }
 

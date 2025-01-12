@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using WindowsGSM.Functions;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using static WindowsGSM.MainWindow;
 
 namespace WindowsGSM.DiscordBot
 {
@@ -55,13 +57,14 @@ namespace WindowsGSM.DiscordBot
                     case "backup":
                     case "update":
                     case "stats":
+                    case "players":
                         List<string> serverIds = Configs.GetServerIdsByAdminId(message.Author.Id.ToString());
                         if (splits[0] == "check")
                         {
                             await message.Channel.SendMessageAsync(
                                 serverIds.Contains("0") ?
-                                "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`" :
-                                $"You have permission on servers (`{string.Join(",", serverIds.ToArray())}`)\nCommands: `check`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`");
+                                "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `players`, `stats`" :
+                                $"You have permission on servers (`{string.Join(",", serverIds.ToArray())}`)\nCommands: `check`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `players`, `stats`");
                             break;
                         }
 
@@ -79,6 +82,7 @@ namespace WindowsGSM.DiscordBot
                                 case "send": await Action_SendCommand(message, args[1]); break;
                                 case "backup": await Action_Backup(message, args[1]); break;
                                 case "update": await Action_Update(message, args[1]); break;
+                                case "players": await Action_PlayerList(message, args[1]); break;
                                 case "stats": await Action_Stats(message); break;
                             }
                         }
@@ -90,6 +94,28 @@ namespace WindowsGSM.DiscordBot
                     default: await SendHelpEmbed(message); break;
                 }
             }
+        }
+
+        private async Task Action_PlayerList(SocketMessage message, string command)
+        {
+            var embed = new EmbedBuilder { };
+            string[] args = command.Split(' ');
+            if (args.Length == 2 && int.TryParse(args[1], out int i))
+            {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                if (WindowsGSM.IsServerExist(args[1]))
+                {
+                    var playerList = WindowsGSM.GetServerMetadata(args[1]).PlayerList;
+                    foreach (var player in playerList)
+                        embed.AddField($"{player.Id}", $"{player.Name}; Score:{player.Score}; Connectec:{player.TimeConnected?.TotalMinutes.ToString("#.##")}", inline: true);
+
+                }
+            }
+            if(embed.Fields.Count == 0)
+            {
+                embed.AddField("PlayerData", "No playerdata currently available!");
+            }
+            await message.Channel.SendMessageAsync(embed: embed.Build());
         }
 
         private async Task Action_List(SocketMessage message)
@@ -372,8 +398,8 @@ namespace WindowsGSM.DiscordBot
             };
 
             string prefix = Configs.GetBotPrefix();
-            embed.AddField("Command", $"{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm stats", inline: true);
-            embed.AddField("Usage", "Check permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nUpdate a server remotely by serverId", inline: true);
+            embed.AddField("Command", $"{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm players <SERVERID>\n{prefix}wgsm stats", inline: true);
+            embed.AddField("Usage", "Check permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nCollects a list of Players, if available\nUpdate a server remotely by serverId", inline: true);
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }

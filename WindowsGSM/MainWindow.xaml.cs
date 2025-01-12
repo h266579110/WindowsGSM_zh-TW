@@ -28,6 +28,8 @@ using Label = System.Windows.Controls.Label;
 using Orientation = System.Windows.Controls.Orientation;
 using System.Windows.Documents;
 using MessageBox = System.Windows.MessageBox;
+using WindowsGSM.GameServer.Query;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WindowsGSM
 {
@@ -92,6 +94,8 @@ namespace WindowsGSM
 
             public bool EmbedConsole;
             public bool AutoScroll;
+
+            public List<PlayerData> PlayerList;
         }
 
         private enum WindowShowStyle : uint
@@ -129,7 +133,7 @@ namespace WindowsGSM
         private Process Installer;
 
         public static readonly Dictionary<int, ServerMetadata> _serverMetadata = new Dictionary<int, ServerMetadata>();
-        private ServerMetadata GetServerMetadata(object serverId) => _serverMetadata.TryGetValue(int.Parse(serverId.ToString()), out var s) ? s : null;
+        public ServerMetadata GetServerMetadata(object serverId) => _serverMetadata.TryGetValue(int.Parse(serverId.ToString()), out var s) ? s : null;
 
         public List<PluginMetadata> PluginsList = new List<PluginMetadata>();
 
@@ -2645,26 +2649,43 @@ namespace WindowsGSM
                     continue;
                 }
 
-                dynamic query = gameServer.QueryMethod;
+
+                var query = gameServer.QueryMethod as QueryTemplate;
                 query.SetAddressPort(server.IP, int.Parse(server.QueryPort));
-                string players = await query.GetPlayersAndMaxPlayers();
-
-                if (players != null)
+                try
                 {
-                    server.Maxplayers = players;
+                    string players = await query.GetPlayersAndMaxPlayers();
 
-                    for (int i = 0; i < ServerGrid.Items.Count; i++)
+                    if (players != null)
                     {
-                        if (server.ID == ((ServerTable)ServerGrid.Items[i]).ID)
+                        server.Maxplayers = players;
+
+                        for (int i = 0; i < ServerGrid.Items.Count; i++)
                         {
-                            int selectedIndex = ServerGrid.SelectedIndex;
-                            ServerGrid.Items[i] = server;
-                            ServerGrid.SelectedIndex = selectedIndex;
-                            ServerGrid.Items.Refresh();
-                            break;
+                            if (server.ID == ((ServerTable)ServerGrid.Items[i]).ID)
+                            {
+                                int selectedIndex = ServerGrid.SelectedIndex;
+                                ServerGrid.Items[i] = server;
+                                ServerGrid.SelectedIndex = selectedIndex;
+                                ServerGrid.Items.Refresh();
+                                break;
+                            }
                         }
                     }
                 }
+                catch { }
+                try
+                {
+                    var playerData = await query.GetPlayersData();
+                    if(playerData != null && playerData.Count != 0)
+                    {
+                        if (int.TryParse(server.ID, out var serverId))
+                        {
+                            _serverMetadata[serverId].PlayerList = playerData;
+                        }
+                    }
+                }
+                catch { }
 
                 await Task.Delay(5000);
             }
