@@ -48,10 +48,13 @@ namespace WindowsGSM.DiscordBot
 		{
 			try
 			{
-				Stream stream = Application.GetResourceStream(new Uri($"pack://application:,,,/Images/WindowsGSM{(string.IsNullOrWhiteSpace(_donorType) ? string.Empty : $"-{_donorType}")}.png")).Stream;
-				await _client.CurrentUser.ModifyAsync(x =>
+                Stream stream = DiscordBot.Configs.GetBotCustomImage();
+				if (stream == null) 
+					stream = Application.GetResourceStream(new Uri($"pack://application:,,,/Images/WindowsGSM{(string.IsNullOrWhiteSpace(_donorType) ? string.Empty : $"-{_donorType}")}.png")).Stream;
+                
+                await _client.CurrentUser.ModifyAsync(x =>
 				{
-					x.Username = "WindowsGSM";
+					x.Username = DiscordBot.Configs.GetBotName();
 					x.Avatar = new Image(stream);
 				});
 			}

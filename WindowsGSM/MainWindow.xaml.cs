@@ -1,30 +1,35 @@
-﻿using System;
+﻿using ControlzEx.Theming;
+using LiveCharts;
+using LiveCharts.Wpf;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
+using Microsoft.Win32;
+using NCrontab;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Management;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.IO;
-using System.Net;
-using System.IO.Compression;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using Microsoft.Win32;
-using MahApps.Metro.Controls;
-using MahApps.Metro.Controls.Dialogs;
-using Newtonsoft.Json.Linq;
-using NCrontab;
-using System.Collections.Generic;
-using System.Collections;
-using LiveCharts;
-using LiveCharts.Wpf;
-using System.Management;
 using System.Windows.Media.Imaging;
-using ControlzEx.Theming;
 using WindowsGSM.Functions;
 using Label = System.Windows.Controls.Label;
+using MessageBox = System.Windows.MessageBox;
 using Orientation = System.Windows.Controls.Orientation;
 using System.Windows.Documents;
 using MessageBox = System.Windows.MessageBox;
@@ -83,6 +88,7 @@ namespace WindowsGSM
             public bool AutoUpdateAlert;
             public bool RestartCrontabAlert;
             public bool CrashAlert;
+            public bool AutoIpUpdateAlert;
 
             // Restart Crontab Settings
             public bool RestartCrontab;
@@ -93,7 +99,11 @@ namespace WindowsGSM
             public string CPUAffinity;
 
             public bool EmbedConsole;
+            public bool ShowConsole;
             public bool AutoScroll;
+
+            //runntime member to determine if public Ip changed
+            public string CurrentPublicIp;
 
             public List<PlayerData> PlayerList;
         }
@@ -121,7 +131,8 @@ namespace WindowsGSM
             Backuping = 9,
             Restored = 10,
             Restoring = 11,
-            Deleting = 12
+            Deleting = 12,
+            Crashed = 13
         }
 
         public static readonly string WGSM_VERSION = "v" + string.Concat(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString().Reverse().Skip(2).Reverse());
@@ -139,9 +150,14 @@ namespace WindowsGSM
 
         private readonly List<System.Windows.Controls.CheckBox> _checkBoxes = new List<System.Windows.Controls.CheckBox>();
 
-        private string g_DonorType = string.Empty;
+        public string g_DonorType = string.Empty;
 
         private readonly DiscordBot.Bot g_DiscordBot = new DiscordBot.Bot();
+
+        private long _lastAutoRestartTime = 0;
+        private long _lastCrashTime = 0;
+        private const long _webhookThresholdTimeInMs = 6000 * 5;
+        public ServerStatus _latestWebhookSend = ServerStatus.Stopped;
 
         public MainWindow(bool showCrashHint)
         {
@@ -213,8 +229,14 @@ namespace WindowsGSM
                 }
             }
 
-            Height = (key.GetValue(RegistryKeyName.Height) == null) ? Height : double.Parse(key.GetValue(RegistryKeyName.Height).ToString());
-            Width = (key.GetValue(RegistryKeyName.Width) == null) ? Width : double.Parse(key.GetValue(RegistryKeyName.Width).ToString());
+            //double.parse can throw when the user changes locale after WindowsGsm setup
+            //Height = (key.GetValue(RegistryKeyName.Height) == null) ? Height : double.Parse(key.GetValue(RegistryKeyName.Height).ToString());
+            //Width = (key.GetValue(RegistryKeyName.Width) == null) ? Width : double.Parse(key.GetValue(RegistryKeyName.Width).ToString());
+            var regValue = 0.0;
+            if (InvariantTryParse(key.GetValue(RegistryKeyName.Height).ToString(), out regValue))
+                Height = regValue;
+            if (InvariantTryParse(key.GetValue(RegistryKeyName.Width).ToString(), out regValue))
+                Width = regValue;
             key.Close();
 
             RenderOptions.ProcessRenderMode = MahAppSwitch_HardWareAcceleration.IsOn ? System.Windows.Interop.RenderMode.SoftwareOnly : System.Windows.Interop.RenderMode.Default;
@@ -367,6 +389,8 @@ namespace WindowsGSM
             StartServerTableRefresh();
 
             StartDashBoardRefresh();
+
+            StartAutpIpUpdate();
         }
 
         private Process GetConsoleProcess(int processId)
@@ -571,7 +595,7 @@ namespace WindowsGSM
             Process.Start(e.Uri.AbsoluteUri);
         }
 
-        private async void ImportPlugin_Click(object sender, RoutedEventArgs e) 
+        private async void ImportPlugin_Click(object sender, RoutedEventArgs e)
         {
             // If a server is installing or import => return
             if (progressbar_InstallProgress.IsIndeterminate || progressbar_ImportProgress.IsIndeterminate)
@@ -781,6 +805,7 @@ namespace WindowsGSM
             _serverMetadata[i].AutoRestartAlert = serverConfig.AutoRestartAlert;
             _serverMetadata[i].AutoStartAlert = serverConfig.AutoStartAlert;
             _serverMetadata[i].AutoUpdateAlert = serverConfig.AutoUpdateAlert;
+            _serverMetadata[i].AutoIpUpdateAlert = serverConfig.AutoIpUpdate;
             _serverMetadata[i].RestartCrontabAlert = serverConfig.RestartCrontabAlert;
             _serverMetadata[i].CrashAlert = serverConfig.CrashAlert;
 
@@ -793,6 +818,7 @@ namespace WindowsGSM
             _serverMetadata[i].CPUAffinity = serverConfig.CPUAffinity;
 
             _serverMetadata[i].EmbedConsole = serverConfig.EmbedConsole;
+            _serverMetadata[i].ShowConsole = serverConfig.ShowConsole;
             _serverMetadata[i].AutoScroll = serverConfig.AutoScroll;
         }
 
@@ -812,9 +838,38 @@ namespace WindowsGSM
                         {
                             var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
                             await webhook.Send(server.ID, server.Game, "Started | Auto Start", server.Name, server.IP, server.Port);
+                            _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
                         }
                     }
                 }
+            }
+        }
+
+
+        private async Task SendCurrentPublicIPs()
+        {
+            string currentPublicIp = GetPublicIP();
+            foreach (ServerTable server in ServerGrid.Items.Cast<ServerTable>().ToList())
+            {
+                try
+                {
+                    int serverId = int.Parse(server.ID);
+                    Process p = GetServerMetadata(server.ID).Process;
+                    if (GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started || GetServerMetadata(server.ID).ServerStatus == ServerStatus.Starting)
+                    {
+
+                        if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(server.ID).AutoIpUpdateAlert)
+                        {
+                            if (_serverMetadata[serverId].CurrentPublicIp == string.Empty || _serverMetadata[serverId].CurrentPublicIp != currentPublicIp)
+                            {
+                                var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                                await webhook.Send(server.ID, server.Game, "Current Public IP", server.Name, currentPublicIp, server.Port);
+                                _serverMetadata[serverId].CurrentPublicIp = currentPublicIp;
+                            }
+                        }
+                    }
+                }
+                catch (Exception) { }
             }
         }
 
@@ -908,7 +963,7 @@ namespace WindowsGSM
 
         public int GetActivePlayers()
         {
-            return ServerGrid.Items.Cast<ServerTable>().Where(s => s.Maxplayers != null && s.Maxplayers.Contains('/')).Sum(s => int.TryParse(s.Maxplayers.Split('/')[0], out int count) ? count : 0 );
+            return ServerGrid.Items.Cast<ServerTable>().Where(s => s.Maxplayers != null && s.Maxplayers.Contains('/')).Sum(s => int.TryParse(s.Maxplayers.Split('/')[0], out int count) ? count : 0);
         }
 
         private void Refresh_DashBoard_LiveChart()
@@ -999,8 +1054,9 @@ namespace WindowsGSM
 
             if (row != null)
             {
+#if DEBUG
                 Console.WriteLine("Datagrid Changed");
-
+#endif
                 if (GetServerMetadata(row.ID).ServerStatus == ServerStatus.Stopped)
                 {
                     button_Start.IsEnabled = true;
@@ -1589,10 +1645,17 @@ namespace WindowsGSM
             if (p == null) { return; }
 
             //If console is useless, return
-            if (p.StartInfo.RedirectStandardOutput) { return; }
+            //if (p.StartInfo.RedirectStandardOutput) { return; }
+            _serverMetadata[int.Parse(server.ID)].ShowConsole = !_serverMetadata[int.Parse(server.ID)].ShowConsole;
+            ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.ShowConsole, GetServerMetadata(server.ID).ShowConsole ? "1" : "0");
 
+            WindowShowStyle style = _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide;
             IntPtr hWnd = GetServerMetadata(server.ID).MainWindow;
-            ShowWindow(hWnd, ShowWindow(hWnd, WindowShowStyle.Hide) ? WindowShowStyle.Hide : WindowShowStyle.ShowNormal);
+
+            //ShowWindow(hWnd, ShowWindow(hWnd, WindowShowStyle.Hide) ? WindowShowStyle.Hide : WindowShowStyle.ShowNormal);
+            ShowWindow(hWnd, WindowShowStyle.Hide);
+            Thread.Sleep(500);
+            ShowWindow(hWnd, style);
         }
 
         private async void Actions_StartAllServers_Click(object sender, RoutedEventArgs e)
@@ -1802,7 +1865,7 @@ namespace WindowsGSM
             }
         }
 
-        private async Task<dynamic> Server_BeginStart(ServerTable server)
+        public async Task<dynamic> Server_BeginStart(ServerTable server)
         {
             dynamic gameServer = GameServer.Data.Class.Get(server.Game, new ServerConfig(server.ID), PluginsList);
             if (gameServer == null) { return null; }
@@ -1847,6 +1910,7 @@ namespace WindowsGSM
                     {
                         while (!p.HasExited && !ShowWindow(p.MainWindowHandle, WindowShowStyle.Minimize))
                         {
+                            Thread.Sleep(500);
                             //Debug.WriteLine("Try Setting ShowMinNoActivate Console Window");
                         }
 
@@ -1858,10 +1922,10 @@ namespace WindowsGSM
 
                     p.WaitForInputIdle();
 
-                    if (!p.StartInfo.CreateNoWindow)
-                    {
-                        ShowWindow(p.MainWindowHandle, WindowShowStyle.Hide);
-                    }
+                    ShowWindow(p.MainWindowHandle, WindowShowStyle.Hide);
+                    Thread.Sleep(500);
+                    ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
+
                 }
                 catch
                 {
@@ -1902,7 +1966,7 @@ namespace WindowsGSM
 
             SetWindowText(p.MainWindowHandle, server.Name);
 
-            ShowWindow(p.MainWindowHandle, WindowShowStyle.Hide);
+            ShowWindow(p.MainWindowHandle, _serverMetadata[int.Parse(server.ID)].ShowConsole ? WindowShowStyle.ShowNormal : WindowShowStyle.Hide);
 
             StartAutoUpdateCheck(server);
 
@@ -1921,7 +1985,12 @@ namespace WindowsGSM
             return gameServer;
         }
 
-        private async Task<bool> Server_BeginStop(ServerTable server, Process p)
+        private bool InvariantTryParse(string input, out double value)
+        {
+            return double.TryParse(input.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+        }
+
+        public async Task<bool> Server_BeginStop(ServerTable server, Process p)
         {
             _serverMetadata[int.Parse(server.ID)].Process = null;
 
@@ -2084,7 +2153,14 @@ namespace WindowsGSM
 
             await Server_BeginStop(server, p);
 
-            await Task.Delay(1000);
+            await Task.Delay(500);
+
+            if (GetServerMetadata(server.ID).UpdateOnStart)
+            {
+                await GameServer_Update(server, " | Update on Start");
+            }
+
+            await Task.Delay(500);
 
             var gameServer = await Server_BeginStart(server);
             if (gameServer == null)
@@ -2103,7 +2179,7 @@ namespace WindowsGSM
             SetServerStatus(server, "Started", ServerCache.GetPID(server.ID).ToString());
         }
 
-        private async Task<bool> GameServer_Update(ServerTable server, string notes = "", bool validate = false)
+        public async Task<bool> GameServer_Update(ServerTable server, string notes = "", bool validate = false)
         {
             if (GetServerMetadata(server.ID).ServerStatus != ServerStatus.Stopped)
             {
@@ -2383,8 +2459,12 @@ namespace WindowsGSM
 
                     if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).CrashAlert)
                     {
-                        var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
-                        await webhook.Send(server.ID, server.Game, "Crashed", server.Name, server.IP, server.Port);
+                        if (CheckWebhookThreshold(ref _lastCrashTime) || _latestWebhookSend != ServerStatus.Crashed)
+                        {
+                            var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                            await webhook.Send(server.ID, server.Game, "Crashed", server.Name, server.IP, server.Port);
+                            _latestWebhookSend = ServerStatus.Crashed;
+                        }
                     }
 
                     _serverMetadata[int.Parse(server.ID)].Process = null;
@@ -2420,8 +2500,13 @@ namespace WindowsGSM
 
                         if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).AutoRestartAlert)
                         {
-                            var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
-                            await webhook.Send(server.ID, server.Game, "Restarted | Auto Restart", server.Name, server.IP, server.Port);
+                            //Only send Webhook_Start if there wasn't a retry in the last X min
+                            if (CheckWebhookThreshold(ref _lastAutoRestartTime))
+                            {
+                                var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
+                                await webhook.Send(server.ID, server.Game, "Restarted | Auto Restart", server.Name, server.IP, server.Port);
+                                _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
+                            }
                         }
                     }
                 }
@@ -2429,6 +2514,19 @@ namespace WindowsGSM
         }
 
         const int UPDATE_INTERVAL_MINUTE = 30;
+        const int IP_UPDATE_INTERVAL_MINUTE = 2;
+        private async void StartAutpIpUpdate()
+        {
+            await Task.Run(async () =>
+            {
+                await Task.Delay(30000); //delay initial check so the servers can start
+                while (true)
+                {
+                    await SendCurrentPublicIPs();
+                    await Task.Delay(60000 * IP_UPDATE_INTERVAL_MINUTE); //check every minute
+                }
+            });
+        }
         private async void StartAutoUpdateCheck(ServerTable server)
         {
             int serverId = int.Parse(server.ID);
@@ -2500,6 +2598,7 @@ namespace WindowsGSM
                             {
                                 var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
                                 await webhook.Send(server.ID, server.Game, "Updated | Auto Update", server.Name, server.IP, server.Port);
+                                _latestWebhookSend = GetServerMetadata(serverId).ServerStatus;
                             }
                         }
                         else
@@ -2534,77 +2633,9 @@ namespace WindowsGSM
 
         private async void StartRestartCrontabCheck(ServerTable server)
         {
-            int serverId = int.Parse(server.ID);
+            var crontabManager = new CrontabManager(this, server, GetServerMetadata(server.ID).Process);
 
-            //Save the process of game server
-            Process p = GetServerMetadata(server.ID).Process;
-
-            while (p != null && !p.HasExited)
-            {
-                //If not enable return
-                if (!GetServerMetadata(serverId).RestartCrontab)
-                {
-                    await Task.Delay(1000);
-
-                    continue;
-                }
-
-                //Try get next DataTime restart
-                DateTime? crontabTime = CrontabSchedule.TryParse(GetServerMetadata(serverId).CrontabFormat)?.GetNextOccurrence(DateTime.Now);
-
-                //Delay 1 second for later compare
-                await Task.Delay(1000);
-
-                //Return if crontab expression is invalid 
-                if (crontabTime == null) { continue; }
-
-                //If now >= crontab time
-                if (DateTime.Compare(DateTime.Now, crontabTime ?? DateTime.Now) >= 0)
-                {
-                    //Update the next crontab
-                    var currentRow = (ServerTable)ServerGrid.SelectedItem;
-                    if (currentRow.ID == server.ID)
-                    {
-                        textBox_nextcrontab.Text = CrontabSchedule.TryParse(GetServerMetadata(serverId).CrontabFormat)?.GetNextOccurrence(DateTime.Now).ToString("ddd, MM/dd/yyyy HH:mm:ss");
-                    }
-
-                    if (p == null || p.HasExited)
-                    {
-                        break;
-                    }
-
-                    //Restart the server
-                    if (GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started)
-                    {
-                        _serverMetadata[int.Parse(server.ID)].Process = null;
-
-                        //Begin Restart
-                        _serverMetadata[int.Parse(server.ID)].ServerStatus = ServerStatus.Restarting;
-                        Log(server.ID, "Action: Restart");
-                        SetServerStatus(server, "Restarting");
-
-                        await Server_BeginStop(server, p);
-                        var gameServer = await Server_BeginStart(server);
-                        if (gameServer == null) { return; }
-
-                        _serverMetadata[int.Parse(server.ID)].ServerStatus = ServerStatus.Started;
-                        Log(server.ID, "Server: Restarted | Restart Crontab");
-                        if (!string.IsNullOrWhiteSpace(gameServer.Notice))
-                        {
-                            Log(server.ID, "[Notice] " + gameServer.Notice);
-                        }
-                        SetServerStatus(server, "Started", ServerCache.GetPID(server.ID).ToString());
-
-                        if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).RestartCrontabAlert)
-                        {
-                            var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, g_DonorType);
-                            await webhook.Send(server.ID, server.Game, "Restarted | Restart Crontab", server.Name, server.IP, server.Port);
-                        }
-
-                        break;
-                    }
-                }
-            }
+            await crontabManager.MainLoop();
         }
 
         private async void StartSendHeartBeat(ServerTable server)
@@ -2725,7 +2756,7 @@ namespace WindowsGSM
             });
         }
 
-        private void SetServerStatus(ServerTable server, string status, string pid = null)
+        public void SetServerStatus(ServerTable server, string status, string pid = null)
         {
             server.Status = status;
             if (pid != null)
@@ -2758,13 +2789,12 @@ namespace WindowsGSM
             DataGrid_RefreshElements();
         }
 
-        public void Log(string serverId, string logText)
+        public void Log(string serverId, string logText, bool debug = false)
         {
             string title = int.TryParse(serverId, out int i) ? $"#{i.ToString()}" : serverId;
             string log = $"[{DateTime.Now.ToString("MM/dd/yyyy-HH:mm:ss")}][{title}] {logText}" + Environment.NewLine;
             string logPath = ServerPath.GetLogs();
             Directory.CreateDirectory(logPath);
-
             string logFile = Path.Combine(logPath, $"L{DateTime.Now.ToString("yyyyMMdd")}.log");
             File.AppendAllText(logFile, log);
 
@@ -2985,7 +3015,7 @@ namespace WindowsGSM
                 StartInfo =
                 {
                     FileName = "schtasks",
-                    Arguments = enable ? $"/create /tn {taskName} /tr \"{wgsmPath}\" /sc onlogon /rl HIGHEST /f" : $"/delete /tn {taskName} /f",
+                    Arguments = enable ? $"/create /tn {taskName} /tr \"{wgsmPath}\" /sc onlogon /delay 0000:10 /rl HIGHEST /f" : $"/delete /tn {taskName} /f",
                     CreateNoWindow = true,
                     UseShellExecute = false
                 }
@@ -3072,6 +3102,7 @@ namespace WindowsGSM
                         string type = JObject.Parse(json)["type"].ToString();
 
                         g_DonorType = type;
+
                         g_DiscordBot.SetDonorType(g_DonorType);
                         comboBox_Themes.IsEnabled = true;
 
@@ -3412,7 +3443,7 @@ namespace WindowsGSM
         }
         #endregion
 
-        private string GetPublicIP()
+        public static string GetPublicIP()
         {
             try
             {
@@ -3658,6 +3689,14 @@ namespace WindowsGSM
             _serverMetadata[int.Parse(server.ID)].CrashAlert = MahAppSwitch_CrashAlert.IsOn;
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.CrashAlert, GetServerMetadata(server.ID).CrashAlert ? "1" : "0");
         }
+
+        private void Switch_AutoIpUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            var server = (ServerTable)ServerGrid.SelectedItem;
+            if (server == null) { return; }
+            _serverMetadata[int.Parse(server.ID)].AutoIpUpdateAlert = MahAppSwitch_AutoIpUpdate.IsOn;
+            ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.AutoIpUpdateAlert, GetServerMetadata(server.ID).AutoIpUpdateAlert ? "1" : "0");
+        }
         #endregion
 
         private async void Window_Activated(object sender, EventArgs e)
@@ -3703,6 +3742,7 @@ namespace WindowsGSM
             {
                 button_DiscordBotPrefixEdit.Content = "Save";
                 textBox_DiscordBotPrefix.IsEnabled = true;
+                textBox_DiscordBotName.IsEnabled = true;
                 textBox_DiscordBotPrefix.Focus();
                 textBox_DiscordBotPrefix.SelectAll();
             }
@@ -3710,7 +3750,11 @@ namespace WindowsGSM
             {
                 button_DiscordBotPrefixEdit.Content = "Edit";
                 textBox_DiscordBotPrefix.IsEnabled = false;
+                textBox_DiscordBotName.IsEnabled = false;
+
                 DiscordBot.Configs.SetBotPrefix(textBox_DiscordBotPrefix.Text);
+                DiscordBot.Configs.SetBotName(textBox_DiscordBotName.Text);
+
                 label_DiscordBotCommands.Content = DiscordBot.Configs.GetCommandsList();
             }
         }
@@ -3834,6 +3878,23 @@ namespace WindowsGSM
             listBox_DiscordBotAdminList.SelectedIndex = listBox_DiscordBotAdminList.Items.Count >= 0 ? selectIndex : -1;
         }
 
+        private bool CheckWebhookThreshold(ref long lastWebhookTimeInMs)
+        {
+            bool ret = false;
+            //init counter
+            if (lastWebhookTimeInMs == 0)
+            {
+                lastWebhookTimeInMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                return true;
+            }
+            if ((DateTimeOffset.Now.ToUnixTimeMilliseconds() - lastWebhookTimeInMs) > _webhookThresholdTimeInMs)
+                ret = true;
+
+            //reset counter
+            lastWebhookTimeInMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            return ret;
+        }
+
         public int GetServerCount()
         {
             return ServerGrid.Items.Count;
@@ -3874,7 +3935,7 @@ namespace WindowsGSM
             return server?.Name ?? string.Empty;
         }
 
-        private ServerTable GetServerTableById(string serverId)
+        public ServerTable GetServerTableById(string serverId)
         {
             for (int i = 0; i < ServerGrid.Items.Count; i++)
             {
@@ -3992,6 +4053,7 @@ namespace WindowsGSM
                 button_DiscordBotPrefixEdit.Content = "Edit";
                 textBox_DiscordBotPrefix.IsEnabled = false;
                 textBox_DiscordBotPrefix.Text = DiscordBot.Configs.GetBotPrefix();
+                textBox_DiscordBotName.Text = DiscordBot.Configs.GetBotName();
 
                 button_DiscordBotTokenEdit.Content = "Edit";
                 textBox_DiscordBotToken.IsEnabled = false;
@@ -4055,6 +4117,20 @@ namespace WindowsGSM
             Button_AutoScroll.Content = Button_AutoScroll.Content.ToString() == "✔️ AUTO SCROLL" ? "❌ AUTO SCROLL" : "✔️ AUTO SCROLL";
             _serverMetadata[int.Parse(server.ID)].AutoScroll = Button_AutoScroll.Content.ToString().Contains("✔️");
             ServerConfig.SetSetting(server.ID, ServerConfig.SettingName.AutoScroll, GetServerMetadata(server.ID).AutoScroll ? "1" : "0");
+        }
+
+        /** 
+         * Updates the Crontab Gui Element for the next time it a restart scedule will trigger. It is not necesarly the one set in the gui if you set up other restart crontabs
+         * You can not call this from any onther thread than the main one. Anything accessing GUI components besides Main thread will immediatly kill that thread without exception or trace
+         */
+        public void UpdateCrontabTime(string id, string expression)
+        {
+            var currentRow = (ServerTable)ServerGrid.SelectedItem;
+            if (currentRow.ID == id)
+            {
+                textBox_nextcrontab.Text = CrontabSchedule.TryParse(expression)?.GetNextOccurrence(DateTime.Now).ToString("ddd, MM/dd/yyyy HH:mm:ss");
+            }
+
         }
     }
 }

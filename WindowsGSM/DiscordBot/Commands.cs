@@ -34,13 +34,13 @@ namespace WindowsGSM.DiscordBot
             var prefix = Configs.GetBotPrefix();
             var commandLen = prefix.Length + 4;
             if (message.Content.Length < commandLen) { return; }
-            if (message.Content.Length == commandLen && message.Content == $"{prefix}wgsm")
+            if (message.Content.Length == commandLen && message.Content.ToLower().Trim() == $"{prefix}wgsm".ToLower().Trim())
             {
                 await SendHelpEmbed(message);
                 return;
             }
 
-            if (message.Content.Length >= commandLen + 1 && message.Content.Substring(0, commandLen + 1) == $"{prefix}wgsm ")
+            if (message.Content.Length >= commandLen + 1 && message.Content.Substring(0, commandLen + 1).ToLower().Trim() == $"{prefix}wgsm ".ToLower().Trim())
             {
                 // Remote Actions
                 string[] args = message.Content.Split(new[] { ' ' }, 2);
@@ -58,6 +58,7 @@ namespace WindowsGSM.DiscordBot
                     case "update":
                     case "stats":
                     case "players":
+                    case "serverStats":
                         List<string> serverIds = Configs.GetServerIdsByAdminId(message.Author.Id.ToString());
                         if (splits[0] == "check")
                         {
@@ -83,6 +84,7 @@ namespace WindowsGSM.DiscordBot
                                 case "backup": await Action_Backup(message, args[1]); break;
                                 case "update": await Action_Update(message, args[1]); break;
                                 case "players": await Action_PlayerList(message, args[1]); break;
+                                case "serverStats": await Action_GameServerStats(message, args[1]); break;
                                 case "stats": await Action_Stats(message); break;
                             }
                         }
@@ -196,7 +198,7 @@ namespace WindowsGSM.DiscordBot
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.StopServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
                             await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) {(started ? "Stopped" : "Fail to Stop")}.");
@@ -270,7 +272,7 @@ namespace WindowsGSM.DiscordBot
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             string sendCommand = command.Substring(args[1].Length + 6);
                             bool sent = await WindowsGSM.SendCommandById(args[1], sendCommand, message.Author.Id.ToString(), message.Author.Username);
@@ -379,6 +381,42 @@ namespace WindowsGSM.DiscordBot
             await message.Channel.SendMessageAsync(embed: (await GetMessageEmbed(system)).Build());
         }
 
+        private async Task Action_GameServerStats(SocketMessage message, string command)
+        {
+            Console.WriteLine("executing gameserverstats");
+            string[] args = command.Split(' ');
+            if (args.Length == 2 && int.TryParse(args[1], out int i))
+            {
+                await Application.Current.Dispatcher.Invoke(async () =>
+                {
+                    MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                    if (WindowsGSM.IsServerExist(args[1]))
+                    {
+                        Console.WriteLine("executing gameserverstats_ server exists");
+                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        {
+                            var serverTable = WindowsGSM.GetServerTableById(args[1]);
+                            await message.Channel.SendMessageAsync(embed: (await GetServerStatsMessage(serverTable)).Build());
+                        }
+                        else
+                        {
+                            await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) currently in {serverStatus.ToString()} state, not able to gather infos.");
+                        }
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) does not exists.");
+                    }
+                });
+            }
+            else
+            {
+                await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm restart `<SERVERID>`");
+            }
+        }
+        
+
         private async Task SendServerEmbed(SocketMessage message, Color color, string serverId, string serverStatus, string serverName)
         {
             var embed = new EmbedBuilder { Color = color };
@@ -398,8 +436,8 @@ namespace WindowsGSM.DiscordBot
             };
 
             string prefix = Configs.GetBotPrefix();
-            embed.AddField("Command", $"{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm players <SERVERID>\n{prefix}wgsm stats", inline: true);
-            embed.AddField("Usage", "Check permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nCollects a list of Players, if available\nUpdate a server remotely by serverId", inline: true);
+            embed.AddField("Command", $"{prefix}wgsm check\n{prefix}wgsm list\n{prefix}wgsm start <SERVERID>\n{prefix}wgsm stop <SERVERID>\n{prefix}wgsm restart <SERVERID>\n{prefix}wgsm update <SERVERID>\n{prefix}wgsm send <SERVERID> <COMMAND>\n{prefix}wgsm backup <SERVERID>\n{prefix}wgsm stats\n{prefix}wgsm serverStats <SERVERID>\n{prefix}wgsm players <SERVERID>", inline: true);
+            embed.AddField("Usage", "Check permission\nPrint server list with id, status and name\nStart a server remotely by serverId\nStop a server remotely by serverId\nRestart a server remotely by serverId\nSend a command to server console\nBackup a server remotely by serverId\nUpdate a server remotely by serverId\nCollects a list of Players, if available", inline: true);
 
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
@@ -441,6 +479,26 @@ namespace WindowsGSM.DiscordBot
             return (0, 0, 0);
         }
 
+
+        private async Task<EmbedBuilder> GetServerStatsMessage(ServerTable table)
+        {
+            var embed = new EmbedBuilder
+            {
+                Title = ":small_orange_diamond: GameServer Metrics",
+                Description = $"Server name: {Environment.MachineName}",
+                Color = Color.Blue
+            };
+
+            embed.AddField("ServerId", table.ID, true);
+            embed.AddField("ServerName", table.Name, true);
+            embed.AddField("ServerIp", table.IP, true);
+            embed.AddField("ServerPublicIp", MainWindow.GetPublicIP(), true);
+            embed.AddField("PlayerCount", table.Maxplayers, true);
+            embed.WithCurrentTimestamp();
+
+            return embed;
+        }
+
         private async Task<EmbedBuilder> GetMessageEmbed(SystemMetrics system)
         {
             var embed = new EmbedBuilder
@@ -466,5 +524,6 @@ namespace WindowsGSM.DiscordBot
 
             return embed;
         }
+
     }
 }

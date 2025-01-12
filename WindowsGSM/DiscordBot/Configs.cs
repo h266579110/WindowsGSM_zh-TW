@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Discord;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using WindowsGSM.Functions;
@@ -12,7 +13,13 @@ namespace WindowsGSM.DiscordBot
 		public static void CreateConfigs()
 		{
 			Directory.CreateDirectory(_botPath);
-		}
+
+			var namePath = Path.Combine(_botPath, "name.txt");
+
+            if (!File.Exists(namePath))
+				File.WriteAllText(namePath, "WindowsGSM");
+
+        }
 
 		public static string GetCommandsList()
 		{
@@ -30,15 +37,46 @@ namespace WindowsGSM.DiscordBot
 			{
 				return string.Empty;
 			}
-		}
+        }
 
-		public static void SetBotPrefix(string prefix)
-		{
-			Directory.CreateDirectory(_botPath);
-			File.WriteAllText(Path.Combine(_botPath, "prefix.txt"), prefix);
-		}
 
-		public static string GetBotToken()
+        public static void SetBotPrefix(string prefix)
+        {
+            Directory.CreateDirectory(_botPath);
+            File.WriteAllText(Path.Combine(_botPath, "prefix.txt"), prefix);
+        }
+
+        public static string GetBotName()
+        {
+            try
+            {
+                return File.ReadAllText(Path.Combine(_botPath, "name.txt")).Trim();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public static void SetBotName(string name)
+        {
+            Directory.CreateDirectory(_botPath);
+            File.WriteAllText(Path.Combine(_botPath, "name.txt"), name);
+        }
+
+        public static FileStream GetBotCustomImage()
+        {
+            try
+            {
+                return new FileStream(Path.Combine(_botPath, "avatar.png"), FileMode.Open);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static string GetBotToken()
 		{
 			try
 			{

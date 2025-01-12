@@ -30,6 +30,7 @@ namespace WindowsGSM.GameServer.Engine
         {
             var (p, error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
             Error = error;
+            await Task.Run(() => { p.WaitForExit(); });
             return p;
         }
 

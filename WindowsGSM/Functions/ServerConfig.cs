@@ -29,9 +29,11 @@ namespace WindowsGSM.Functions
             public const string RestartCrontab = "restartcrontab";
             public const string CrontabFormat = "crontabformat";
             public const string EmbedConsole = "embedconsole";
+            public const string ShowConsole = "showconsole";
             public const string AutoStartAlert = "autostartalert";
             public const string AutoRestartAlert = "autorestartalert";
             public const string AutoUpdateAlert = "autoupdatealert";
+            public const string AutoIpUpdateAlert = "autoipupdatealert";
             public const string RestartCrontabAlert = "restartcrontabalert";
             public const string CrashAlert = "crashalert";
             public const string CPUPriority = "cpupriority";
@@ -60,11 +62,13 @@ namespace WindowsGSM.Functions
         public bool RestartCrontab;
         public string CrontabFormat;
         public bool EmbedConsole;
+        public bool ShowConsole;
         public bool AutoStartAlert;
         public bool AutoRestartAlert;
         public bool AutoUpdateAlert;
         public bool RestartCrontabAlert;
         public bool CrashAlert;
+        public bool AutoIpUpdate;
         public string CPUPriority;
         public string CPUAffinity;
         public bool AutoScroll;
@@ -131,11 +135,13 @@ namespace WindowsGSM.Functions
                             case SettingName.RestartCrontab: RestartCrontab = keyvalue[1] == "1"; break;
                             case SettingName.CrontabFormat: CrontabFormat = keyvalue[1]; break;
                             case SettingName.EmbedConsole: EmbedConsole = keyvalue[1] == "1"; break;
+                            case SettingName.ShowConsole: ShowConsole = keyvalue[1] == "1"; break;
                             case SettingName.AutoStartAlert: AutoStartAlert = keyvalue[1] == "1"; break;
                             case SettingName.AutoRestartAlert: AutoRestartAlert = keyvalue[1] == "1"; break;
                             case SettingName.AutoUpdateAlert: AutoUpdateAlert = keyvalue[1] == "1"; break;
                             case SettingName.RestartCrontabAlert: RestartCrontabAlert = keyvalue[1] == "1"; break;
                             case SettingName.CrashAlert: CrashAlert = keyvalue[1] == "1"; break;
+                            case SettingName.AutoIpUpdateAlert: AutoIpUpdate = keyvalue[1] == "1"; break;
                             case SettingName.CPUPriority: CPUPriority = keyvalue[1]; break;
                             case SettingName.CPUAffinity: CPUAffinity = keyvalue[1]; break;
                             case SettingName.AutoScroll: AutoScroll = keyvalue[1] == "1"; break;
@@ -157,6 +163,7 @@ namespace WindowsGSM.Functions
             ServerGSLT = string.Empty;
             ServerParam = gameServer.Additional;
             EmbedConsole = false;
+            ShowConsole = false;
 
             AutoRestart = false;
             AutoStart = false;
@@ -173,6 +180,7 @@ namespace WindowsGSM.Functions
             AutoUpdateAlert = true;
             RestartCrontabAlert = true;
             CrashAlert = true;
+            AutoIpUpdate = true;
             CPUPriority = "2";
             CPUAffinity = string.Concat(System.Linq.Enumerable.Repeat("1", Environment.ProcessorCount));
             AutoScroll = true;
@@ -216,6 +224,7 @@ namespace WindowsGSM.Functions
                     textwriter.WriteLine($"{SettingName.CrontabFormat}=\"{CrontabFormat}\"");
                     textwriter.WriteLine(string.Empty);
                     textwriter.WriteLine($"{SettingName.EmbedConsole}=\"{(EmbedConsole ? "1" : "0")}\"");
+                    textwriter.WriteLine($"{SettingName.ShowConsole}=\"{(ShowConsole? "1" : "0")}\"");
                     textwriter.WriteLine($"{SettingName.AutoScroll}=\"{(AutoScroll ? "1" : "0")}\"");
                     textwriter.WriteLine(string.Empty);
                     textwriter.WriteLine($"{SettingName.AutoStartAlert}=\"1\"");
@@ -223,6 +232,7 @@ namespace WindowsGSM.Functions
                     textwriter.WriteLine($"{SettingName.AutoUpdateAlert}=\"1\"");
                     textwriter.WriteLine($"{SettingName.RestartCrontabAlert}=\"1\"");
                     textwriter.WriteLine($"{SettingName.CrashAlert}=\"1\"");
+                    textwriter.WriteLine($"{SettingName.AutoIpUpdateAlert}=\"0\"");
                 }
 
                 return true;
