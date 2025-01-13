@@ -102,20 +102,28 @@ namespace WindowsGSM.DiscordBot
         {
             var embed = new EmbedBuilder { };
             string[] args = command.Split(' ');
-            if (args.Length == 2 && int.TryParse(args[1], out int i))
+            if (args.Length >= 2 && int.TryParse(args[1], out int i))
             {
-                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                if (WindowsGSM.IsServerExist(args[1]))
+                await Application.Current.Dispatcher.Invoke(async () =>
                 {
-                    var playerList = WindowsGSM.GetServerMetadata(args[1]).PlayerList;
-                    foreach (var player in playerList)
-                        embed.AddField($"{player.Id}", $"{player.Name}; Score:{player.Score}; Connectec:{player.TimeConnected?.TotalMinutes.ToString("#.##")}", inline: true);
-
-                }
+                    MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                    if (WindowsGSM.IsServerExist(args[1]))
+                    {
+                        var playerList = WindowsGSM.GetServerTableById(args[1]).PlayerList;
+                        foreach (var player in playerList)
+                        {
+                            embed.AddField($"Player {player.Id}", $"Name: {player.Name}; Score:{player.Score}; Connected for:{player.TimeConnected?.TotalMinutes.ToString("#.##")}", inline: true);
+                        }
+                    }
+                    if (embed.Fields.Count == 0)
+                    {
+                        embed.AddField("PlayerData", "No playerdata currently available!");
+                    }
+                });
             }
-            if(embed.Fields.Count == 0)
+            else
             {
-                embed.AddField("PlayerData", "No playerdata currently available!");
+                embed.AddField("PlayerData", "Something went wrong in your query!");
             }
             await message.Channel.SendMessageAsync(embed: embed.Build());
         }
@@ -415,7 +423,7 @@ namespace WindowsGSM.DiscordBot
                 await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm restart `<SERVERID>`");
             }
         }
-        
+
 
         private async Task SendServerEmbed(SocketMessage message, Color color, string serverId, string serverStatus, string serverName)
         {

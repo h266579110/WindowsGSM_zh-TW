@@ -17,7 +17,6 @@ using System.Linq;
 using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,10 +30,7 @@ using WindowsGSM.Functions;
 using Label = System.Windows.Controls.Label;
 using MessageBox = System.Windows.MessageBox;
 using Orientation = System.Windows.Controls.Orientation;
-using System.Windows.Documents;
-using MessageBox = System.Windows.MessageBox;
 using WindowsGSM.GameServer.Query;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WindowsGSM
 {
@@ -104,8 +100,6 @@ namespace WindowsGSM
 
             //runntime member to determine if public Ip changed
             public string CurrentPublicIp;
-
-            public List<PlayerData> PlayerList;
         }
 
         private enum WindowShowStyle : uint
@@ -2712,7 +2706,7 @@ namespace WindowsGSM
                     {
                         if (int.TryParse(server.ID, out var serverId))
                         {
-                            _serverMetadata[serverId].PlayerList = playerData;
+                            server.PlayerList = playerData;
                         }
                     }
                 }
