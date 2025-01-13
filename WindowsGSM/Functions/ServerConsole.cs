@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace WindowsGSM.Functions
 {
@@ -23,8 +24,9 @@ namespace WindowsGSM.Functions
         private const int WM_GETTEXT = 0x000D;
         private const int WM_GETTEXTLENGTH = 0x000E;
 
-        private const int MAX_LINE = 150;
+        private const int MAX_LINE = 500;
         private readonly List<string> _consoleList = new List<string>();
+        private readonly List<string> _recorderConsoleList = new List<string>();
         private readonly string _serverId;
         private int _lineNumber = 0;
 
@@ -112,7 +114,7 @@ namespace WindowsGSM.Functions
             return (_consoleList.Count == 0) ? string.Empty : _consoleList[GetLineNumber()];
         }
 
-        private int GetLineNumber()
+        public int GetLineNumber()
         {
             if (_lineNumber < 0)
             {
@@ -138,6 +140,16 @@ namespace WindowsGSM.Functions
                 }
             }
 
+            if (_recorderConsoleList.Any())
+            {
+                _recorderConsoleList.Add(text);
+
+                if (_recorderConsoleList.Count > MAX_LINE)
+                {
+                    _recorderConsoleList.RemoveAt(0);
+                }
+            }
+
             _consoleList.Add(text);
             if (_consoleList.Count > MAX_LINE)
             {
@@ -151,7 +163,7 @@ namespace WindowsGSM.Functions
             for (int i = 0; i < message.Length; i++)
             {
                 // This is the solution for the error stated above
-                if (i > 0 && message[i] == message[i-1])
+                if (i > 0 && message[i] == message[i - 1])
                 {
                     // Send a None key, break the repeat bug
                     PostMessage(hWnd, WM_KEYDOWN, (IntPtr)Keys.None, (IntPtr)0);
@@ -188,6 +200,19 @@ namespace WindowsGSM.Functions
                     https://github.com/WindowsGSM/WindowsGSM/issues/14
                 */
             }
+        }
+
+        public void StartRecorder()
+        {
+            _recorderConsoleList.Clear();
+            _recorderConsoleList.Add("Start:");
+        }
+
+        public string StopRecorder()
+        {
+            var text = string.Join(Environment.NewLine, _recorderConsoleList.ToArray());
+            _recorderConsoleList.Clear();
+            return text;
         }
     }
 }

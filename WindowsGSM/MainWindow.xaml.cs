@@ -1537,7 +1537,7 @@ namespace WindowsGSM
             var server = (ServerTable)ServerGrid.SelectedItem;
             if (server == null) { return; }
 
-            SendCommand(server, command);
+            SendCommandAsync(server, command);
         }
 
         private void Textbox_ServerCommand_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -2832,14 +2832,24 @@ namespace WindowsGSM
             textBox_wgsmlog.Clear();
         }
 
-        private void SendCommand(ServerTable server, string command)
+        public async Task<string> SendCommandAsync(ServerTable server, string command, int waitForDataInMs = 0)
         {
             Process p = GetServerMetadata(server.ID).Process;
-            if (p == null) { return; }
+            int.TryParse(server.ID, out var id);
+            if (p == null) { return ""; }
 
             textbox_servercommand.Focusable = false;
-            _serverMetadata[int.Parse(server.ID)].ServerConsole.Input(p, command, GetServerMetadata(server.ID).MainWindow);
+            _serverMetadata[id].ServerConsole.StartRecorder();
+            _serverMetadata[id].ServerConsole.Input(p, command, GetServerMetadata(server.ID).MainWindow);
             textbox_servercommand.Focusable = true;
+
+            if (waitForDataInMs != 0)
+            {
+                await Task.Delay(waitForDataInMs);
+                return _serverMetadata[id].ServerConsole.StopRecorder();
+            }
+            else
+                return "Sent!";
         }
 
         private static bool IsValidIPAddress(string ip)
@@ -3970,14 +3980,13 @@ namespace WindowsGSM
             return GetServerMetadata(server.ID).ServerStatus == ServerStatus.Started;
         }
 
-        public async Task<bool> SendCommandById(string serverId, string command, string adminID, string adminName)
+        public Task<string> SendCommandById(string serverId, string command, string adminID, string adminName, int waitForDataInMs = 0)
         {
             var server = GetServerTableById(serverId);
-            if (server == null) { return false; }
+            if (server == null) { return Task.FromResult(""); }
 
             DiscordBotLog($"Discord: Receive SEND action | {adminName} ({adminID}) | {command}");
-            SendCommand(server, command);
-            return true;
+            return SendCommandAsync(server, command, waitForDataInMs);
         }
 
         public async Task<bool> BackupServerById(string serverId, string adminID, string adminName)
