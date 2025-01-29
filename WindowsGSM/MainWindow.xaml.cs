@@ -1183,17 +1183,23 @@ namespace WindowsGSM
 
             var newServerConfig = new ServerConfig(null);
             string installPath = ServerPath.GetServersServerFiles(newServerConfig.ServerID);
+
             if (Directory.Exists(installPath))
             {
-                try
+                Log(newServerConfig.ServerID, "[ERROR] Server folder already exists, but does not seem to be loaded in WGSM. " +
+                    "You either have messed up the Windowsgsm.cfg, or changed the plugin of the server." +
+                    " Please Back it up manually and maybe remove it and reinstall the server.");
+                for (int i = int.Parse(newServerConfig.ServerID); i < 100; i++)
                 {
-                    Directory.Delete(installPath, true);
+                    newServerConfig = new ServerConfig(i.ToString());
+                    installPath = ServerPath.GetServersServerFiles(newServerConfig.ServerID);
+                    if (!Directory.Exists(installPath))
+                    {
+                        break;
+                    }
                 }
-                catch
-                {
-                    System.Windows.Forms.MessageBox.Show(installPath + " is not accessible!", "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+
+                Log(newServerConfig.ServerID, "[Notice] Found a free ServerID");
             }
 
             Directory.CreateDirectory(installPath);
