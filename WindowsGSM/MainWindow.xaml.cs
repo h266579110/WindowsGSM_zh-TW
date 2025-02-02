@@ -372,10 +372,12 @@ namespace WindowsGSM
 
             AutoStartServer();
 
+#if GOOGLE
             if (MahAppSwitch_SendStatistics.IsOn)
             {
                 SendGoogleAnalytics();
             }
+#endif
 
             StartConsoleRefresh();
 
@@ -1008,12 +1010,14 @@ namespace WindowsGSM
 
         private async void SendGoogleAnalytics()
         {
+#if GOOGLE
             var analytics = new GoogleAnalytics();
             analytics.SendWindowsOS();
             analytics.SendWindowsGSMVersion();
             analytics.SendProcessorName();
             analytics.SendRAM();
             analytics.SendDisk();
+#endif
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1265,11 +1269,14 @@ namespace WindowsGSM
                 comboBox_InstallGameServer.IsEnabled = true;
                 progressbar_InstallProgress.IsIndeterminate = false;
 
+
+#if GOOGLE
                 if (MahAppSwitch_SendStatistics.IsOn)
                 {
                     var analytics = new GoogleAnalytics();
                     analytics.SendGameServerInstall(newServerConfig.ServerID, servergame);
                 }
+#endif
             }
             else
             {
@@ -1968,11 +1975,14 @@ namespace WindowsGSM
 
             StartQuery(server);
 
+
+#if GOOGLE
             if (MahAppSwitch_SendStatistics.IsOn)
             {
                 var analytics = new GoogleAnalytics();
                 analytics.SendGameServerStart(server.ID, server.Game);
             }
+#endif
 
             return gameServer;
         }
@@ -2699,11 +2709,14 @@ namespace WindowsGSM
 
             while (p != null && !p.HasExited)
             {
+
+#if GOOGLE
                 if (MahAppSwitch_SendStatistics.IsOn)
                 {
                     var analytics = new GoogleAnalytics();
                     analytics.SendGameServerHeartBeat(server.Game, server.Name);
                 }
+#endif
 
                 await Task.Delay(300000);
             }

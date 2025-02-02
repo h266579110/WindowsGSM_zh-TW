@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeDom.Providers.DotNetCompilerPlatform;
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
@@ -57,13 +58,15 @@ namespace WindowsGSM.Functions
 
             var options = new CompilerParameters();
             options.ReferencedAssemblies.Add(Assembly.GetEntryAssembly().Location);
+            /*
             options.ReferencedAssemblies.Add("System.dll");
             options.ReferencedAssemblies.Add("System.Core.dll");
             options.ReferencedAssemblies.Add("System.Data.dll");
             options.ReferencedAssemblies.Add(ServerPath.GetBin("Newtonsoft.Json.dll"));
+            */
             options.GenerateInMemory = true;
 
-            var c = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider();
+            var c = new Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider(new ProviderOptions() );
             var cr = shouldAwait ? await Task.Run(() => c.CompileAssemblyFromSource(options, File.ReadAllText(path))) : c.CompileAssemblyFromSource(options, File.ReadAllText(path));
             if (cr.Errors.HasErrors)
             {

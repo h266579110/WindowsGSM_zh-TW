@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace WindowsGSM.Functions
 {
+
+#if GOOGLE
     class GoogleAnalytics
     {
         /// <summary>
@@ -204,4 +206,5 @@ namespace WindowsGSM.Functions
             return clientId;
         }
     }
+#endif
 }
