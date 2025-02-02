@@ -289,13 +289,7 @@ namespace WindowsGSM.DiscordBot
                             await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) {(!string.IsNullOrWhiteSpace(response) ? "Command sent" : "Fail to send command")}. | `{sendCommand}`");
                             if (withResponse)
                             {
-                                await message.Channel.SendMessageAsync($"LastLog:"); //read last log (2k is the limit for dc messages
-                                const int signsToSend = 1800;
-                                for (int i = 0; i < response.Length; i += signsToSend)
-                                {
-                                    var len = i + signsToSend < response.Length ? signsToSend : response.Length - i;
-                                    await message.Channel.SendMessageAsync($"```\n{response.Substring(i, len)}\n```"); //read last log (2k is the limit for dc messages
-                                }
+                                await SendMultiLog(message, response);
                             }
                         }
                         else
@@ -312,6 +306,17 @@ namespace WindowsGSM.DiscordBot
             else
             {
                 await message.Channel.SendMessageAsync($"Usage: {Configs.GetBotPrefix()}wgsm send `<SERVERID>` `<COMMAND>`");
+            }
+        }
+
+        public static async Task SendMultiLog(SocketMessage message, string response)
+        {
+            await message.Channel.SendMessageAsync($"LastLog:"); //read last log (2k is the limit for dc messages
+            const int signsToSend = 1800;
+            for (int i = 0; i < response.Length; i += signsToSend)
+            {
+                var len = i + signsToSend < response.Length ? signsToSend : response.Length - i;
+                await message.Channel.SendMessageAsync($"```\n{response.Substring(i, len)}\n```"); //read last log (2k is the limit for dc messages
             }
         }
 

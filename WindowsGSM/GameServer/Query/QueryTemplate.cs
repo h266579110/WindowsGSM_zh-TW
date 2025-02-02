@@ -13,6 +13,7 @@ namespace WindowsGSM.GameServer.Query
         Task<List<PlayerData>> GetPlayersData();
         Task<string> GetPlayersAndMaxPlayers();
     }
+
     public struct PlayerData
     {
         public int Id;
