@@ -126,6 +126,35 @@ namespace WindowsGSM.DiscordBot
             });
         }
 
+        public async Task StopAllServer(SocketInteraction interaction)
+        {
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                var serverList = WindowsGSM.GetServerList();
+                foreach (var server in serverList)
+                {
+                    if (WindowsGSM.IsServerExist(server.Item1))
+                    {
+                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(server.Item1);
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
+                        {
+                            bool started = await WindowsGSM.StopServerById(server.Item1, interaction.User.Id.ToString(), interaction.User.Username);
+                            await interaction.FollowupAsync($"Server (ID: {server.Item1}) {(started ? "Stopped" : "Fail to Stop")}.");
+                        }
+                        else if (serverStatus == MainWindow.ServerStatus.Stopped)
+                        {
+                            await interaction.FollowupAsync($"Server (ID: {server.Item1}) already Stopped.");
+                        }
+                        else
+                        {
+                            await interaction.FollowupAsync($"Server (ID: {server.Item1}) currently in {serverStatus.ToString()} state, not able to stop.");
+                        }
+                    }
+                }
+            });
+        }
+
         public async Task RestartServer(SocketInteraction interaction, string serverId)
         {
             var serverName = await GetServerName(serverId);

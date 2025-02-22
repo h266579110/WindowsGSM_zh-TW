@@ -48,6 +48,14 @@ namespace WindowsGSM.DiscordBot.Modules
             Console.WriteLine($@"stop server {serverId} executed by {Context.User.Username}");
         }
 
+        [SlashCommand("stopAll", "Stops all server")]
+        public async Task StopAllCommand()
+        {
+            await Context.Interaction.DeferAsync();
+            await _actions.StopAllServer(Context.Interaction);
+            Console.WriteLine($@"stoped all servers executed by {Context.User.Username}");
+        }
+
         [SlashCommand("restart", "Restart a server")]
         public async Task RestartCommand([Summary("server"), Autocomplete] string serverId)
         {

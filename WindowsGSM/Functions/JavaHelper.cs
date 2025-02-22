@@ -29,6 +29,7 @@ namespace WindowsGSM.Functions
         {
             return FindNewestJavaExecutableAbsolutePath();
         }
+
         public static async Task<JREDownloadTaskResult> DownloadJREToServer(string serverID)
         {
             string serverFilesPath = Functions.ServerPath.GetServersServerFiles(serverID);

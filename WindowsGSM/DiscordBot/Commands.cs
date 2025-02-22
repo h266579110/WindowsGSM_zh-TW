@@ -50,6 +50,7 @@ namespace WindowsGSM.DiscordBot
                 {
                     case "start":
                     case "stop":
+                    case "stopAll":
                     case "restart":
                     case "send":
                     case "sendR":
@@ -65,7 +66,7 @@ namespace WindowsGSM.DiscordBot
                         {
                             await message.Channel.SendMessageAsync(
                                 serverIds.Contains("0") ?
-                                "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `restart`, `send`, `sendR`, `backup`, `update`, `players`, `stats`" :
+                                "You have full permission.\nCommands: `check`, `list`, `start`, `stop`, `stopAll`, `restart`, `send`, `sendR`, `backup`, `update`, `players`, `stats`" :
                                 $"You have permission on servers (`{string.Join(",", serverIds.ToArray())}`)\nCommands: `check`, `start`, `stop`, `restart`, `send`, `sendR`, `backup`, `update`, `players`, `stats`");
                             break;
                         }
@@ -73,6 +74,10 @@ namespace WindowsGSM.DiscordBot
                         if (splits[0] == "list" && serverIds.Contains("0"))
                         {
                             await Action_List(message);
+                        }
+                        else if (splits[0] == "stopAll" && serverIds.Contains("0"))
+                        {
+                            await Action_StopAll(message);
                         }
                         else if (splits[0] != "list" && (serverIds.Contains("0") || serverIds.Contains(splits[1])))
                         {
@@ -236,6 +241,35 @@ namespace WindowsGSM.DiscordBot
             }
         }
 
+        private async Task Action_StopAll(SocketMessage message)
+        {
+            await Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                var serverList = WindowsGSM.GetServerList();
+                foreach (var server in serverList)
+                {
+                    if (WindowsGSM.IsServerExist(server.Item1))
+                    {
+                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(server.Item1);
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
+                        {
+                            bool started = await WindowsGSM.StopServerById(server.Item1, message.Author.Id.ToString(), message.Author.Username);
+                            await message.Channel.SendMessageAsync($"Server (ID: {server.Item1}) {(started ? "Stopped" : "Fail to Stop")}.");
+                        }
+                        else if (serverStatus == MainWindow.ServerStatus.Stopped)
+                        {
+                            await message.Channel.SendMessageAsync($"Server (ID: {server.Item1}) already Stopped.");
+                        }
+                        else
+                        {
+                            await message.Channel.SendMessageAsync($"Server (ID: {server.Item1}) currently in {serverStatus.ToString()} state, not able to stop.");
+                        }
+                    }
+                }
+            });
+        }
+
         private async Task Action_Restart(SocketMessage message, string command)
         {
             string[] args = command.Split(' ');
@@ -247,7 +281,7 @@ namespace WindowsGSM.DiscordBot
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.RestartServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
                             await message.Channel.SendMessageAsync($"Server (ID: {args[1]}) {(started ? "Restarted" : "Fail to Restart")}.");
