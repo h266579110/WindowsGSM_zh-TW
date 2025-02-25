@@ -24,6 +24,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WindowsGSM.DiscordBot;
@@ -154,6 +155,26 @@ namespace WindowsGSM
         private const long _webhookThresholdTimeInMs = 6000 * 5;
         public ServerStatus _latestWebhookSend = ServerStatus.Stopped;
 
+        private void OnSourceInitialized(object sender, EventArgs e)
+        {
+            HwndSource source = (HwndSource)PresentationSource.FromVisual(this);
+            source.AddHook(new HwndSourceHook(HandleMessages));
+        }
+
+        private IntPtr HandleMessages(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            // 0x0112 == WM_SYSCOMMAND, 'Window' command message.
+            // 0xF020 == SC_MINIMIZE, command to minimize the window.
+            if (msg == 0x0112 && ((int)wParam & 0xFFF0) == 0xF020)
+            {
+                // Cancel the minimize.
+                NotifyIcon_MouseClick(null, null);
+                handled = true;
+            }
+
+            return IntPtr.Zero;
+        }
+
         public MainWindow(bool showCrashHint)
         {
             //Add SplashScreen
@@ -162,6 +183,8 @@ namespace WindowsGSM
             DiscordWebhook.SendErrorLog();
 
             InitializeComponent();
+            this.SourceInitialized += new EventHandler(OnSourceInitialized);
+
             Title = $"WindowsGSM {WGSM_VERSION}";
 
             //Close SplashScreen
