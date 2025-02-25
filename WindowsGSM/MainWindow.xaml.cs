@@ -27,12 +27,11 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using WindowsGSM.DiscordBot;
 using WindowsGSM.Functions;
-using WindowsGSM.GameServer.Query;
 using Label = System.Windows.Controls.Label;
 using MessageBox = System.Windows.MessageBox;
 using Orientation = System.Windows.Controls.Orientation;
+using WindowsGSM.GameServer.Query;
 
 namespace WindowsGSM
 {
@@ -1957,7 +1956,7 @@ namespace WindowsGSM
                 }
             });
 
-            //An error may occur on ShowWindow if not adding this
+            //An error may occur on ShowWindow if not adding this 
             if (p == null || p.HasExited)
             {
                 _serverMetadata[int.Parse(server.ID)].Process = null;
@@ -3945,40 +3944,6 @@ namespace WindowsGSM
             }
 
             return list;
-        }
-
-        public List<(string, string, string)> GetServerList(string userId)
-        {
-            var serverIds = Configs.GetServerIdsByAdminId(userId);
-            var serverList = ServerGrid.Items.Cast<ServerTable>().ToList();
-
-            if (serverIds.Contains("0"))
-            {
-                return serverList
-                    .Select(server => (server.ID, server.Status, server.Name))
-                    .ToList();
-            }
-
-            return serverList
-                .Where(server => serverIds.Contains(server.ID))
-                .Select(server => (server.ID, server.Status, server.Name)).ToList();
-        }
-
-        public List<(string, string, string)> GetServerListByUserId(string userId)
-        {
-            var serverIds = Configs.GetServerIdsByAdminId(userId);
-            var serverList = ServerGrid.Items.Cast<ServerTable>().ToList();
-
-            if (serverIds.Contains("0"))
-            {
-                return serverList
-                    .Select(server => (server.ID, server.Status, server.Name))
-                    .ToList();
-            }
-
-            return serverList
-                .Where(server => serverIds.Contains(server.ID))
-                .Select(server => (server.ID, server.Status, server.Name)).ToList();
         }
 
         public bool IsServerExist(string serverId)
