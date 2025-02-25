@@ -20,18 +20,20 @@ namespace WindowsGSM
                 File.WriteAllBytes(mahAppPath, Properties.Resources.MahApps_Metro);
             }
 
-            string roslynBase = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), ServerPath.FolderName.Bin);
-            Directory.CreateDirectory(roslynBase);
-            if (!Directory.Exists(Path.Combine(roslynBase, "roslyn")))
-            {
-                string roslynZipPath = Path.Combine(roslynBase, "roslyn.zip");
-                if (!File.Exists(roslynZipPath) || new FileInfo(roslynZipPath).Length != 7529158) // Latest roslyn.zip byte size is 7529158
-                {
-                    File.WriteAllBytes(roslynZipPath, Properties.Resources.roslyn);
-                    ZipFile.ExtractToDirectory(roslynZipPath, roslynBase);
-                    File.Delete(roslynZipPath);
-                }
-            }
+            /*
+              string roslynBase = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), ServerPath.FolderName.Bin);
+             Directory.CreateDirectory(roslynBase);
+             if (!Directory.Exists(Path.Combine(roslynBase, "roslyn")))
+             {
+                 string roslynZipPath = Path.Combine(roslynBase, "roslyn.zip");
+                 if (!File.Exists(roslynZipPath) || new FileInfo(roslynZipPath).Length != 7529158) // Latest roslyn.zip byte size is 7529158
+                 {
+                     File.WriteAllBytes(roslynZipPath, Properties.Resources.roslyn);
+                     ZipFile.ExtractToDirectory(roslynZipPath, roslynBase);
+                     File.Delete(roslynZipPath);
+                 }
+             }
+             */
 
             string ntsJsonPath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), ServerPath.FolderName.Bin, "Newtonsoft.Json.dll");
             if (!File.Exists(ntsJsonPath) || new FileInfo(ntsJsonPath).Length != 700336) // Latest Newtonsoft.Json.dll byte size is 700336

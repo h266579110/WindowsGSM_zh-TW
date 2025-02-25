@@ -124,7 +124,4 @@
   <data name="Newtonsoft_Json" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\packages\newtonsoft.json.13.0.2\lib\net45\newtonsoft.json.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="roslyn" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\roslyn.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
 </root>
