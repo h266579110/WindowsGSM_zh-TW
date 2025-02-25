@@ -15,7 +15,7 @@ namespace WindowsGSM.Functions
                     Directory.Delete(path, recursive);
                     return true;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return false;
                 }

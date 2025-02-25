@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -7,7 +8,7 @@ using WindowsGSM.Functions;
 
 namespace WindowsGSM.GameServer.Query
 {
-    public class FIVEM
+    public class FIVEM : QueryTemplate
     {
         private static readonly byte[] FIVEM_INFO = Encoding.Default.GetBytes("getinfo windowsgsm");
 
@@ -78,6 +79,11 @@ namespace WindowsGSM.GameServer.Query
             {
                 return null;
             }
+        }
+
+        public async Task<List<PlayerData>> GetPlayersData()
+        {
+            return null;
         }
     }
 }

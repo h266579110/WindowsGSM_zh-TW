@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using WindowsGSM.GameServer.Query;
 
 namespace WindowsGSM.Functions
 {
@@ -16,6 +18,7 @@ namespace WindowsGSM.Functions
         public string QueryPort { get; set; }
         public string Defaultmap { get; set; }
         public string Maxplayers { get; set; }
+        public List<PlayerData> PlayerList { get; set; }
         public string Uptime 
         { 
             get
