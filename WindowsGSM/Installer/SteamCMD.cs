@@ -32,7 +32,7 @@ namespace WindowsGSM.Installer
             Directory.CreateDirectory(_installPath);
             var exePath = Path.Combine(_installPath, _exeFile);
             if (File.Exists(exePath)) { return true; }
-            
+
             try
             {
                 var zipPath = Path.Combine(_installPath, "steamcmd.zip");
@@ -82,7 +82,7 @@ namespace WindowsGSM.Installer
                         {
                             steamUser = keyvalue[1].Trim('\"');
                         }
-                        else if(keyvalue[0] == "steamPass")
+                        else if (keyvalue[0] == "steamPass")
                         {
                             steamPass = keyvalue[1].Trim('\"');
                         }
@@ -103,7 +103,7 @@ namespace WindowsGSM.Installer
             }
 
             _param += (string.IsNullOrWhiteSpace(modName) ? string.Empty : $" +app_set_config 90 mod {modName}") + $" +app_update {appId}" + (validate ? " validate" : "");
-            
+
             if (appId == "90")
             {
                 //Install 4 more times if hlds.exe
@@ -210,6 +210,8 @@ namespace WindowsGSM.Installer
                 await firewall.AddRule();
             }
 
+            if (string.IsNullOrWhiteSpace(_param) || !_param.Contains("-overrideminos"))
+                _param = _param + " -overrideminos";
             Process p = new Process
             {
                 StartInfo =
@@ -246,6 +248,8 @@ namespace WindowsGSM.Installer
         // New
         public static async Task<(Process, string)> UpdateEx(string serverId, string appId, bool validate = true, bool loginAnonymous = true, string modName = null, string custom = null, bool embedConsole = true)
         {
+            if (string.IsNullOrWhiteSpace(custom) || !custom.Contains("-overrideminos"))
+                custom = custom + " -overrideminos";
             string param = GetParameter(ServerPath.GetServersServerFiles(serverId), appId, validate, loginAnonymous, modName, custom);
             if (param == null)
             {
@@ -429,7 +433,7 @@ namespace WindowsGSM.Installer
                 {
                     FileName = exePath,
                     //Sometimes it fails to get if appID < 90
-                    Arguments = $"+login anonymous +app_info_update 1 +app_info_print {appId} +app_info_print {appId} +app_info_print {appId} +app_info_print {appId} +quit",
+                    Arguments = $"+login anonymous -overrideminos +app_info_update 1 +app_info_print {appId} +app_info_print {appId} +app_info_print {appId} +app_info_print {appId} +logoff +quit",
                     WindowStyle = ProcessWindowStyle.Minimized,
                     CreateNoWindow = true,
                     UseShellExecute = false,
