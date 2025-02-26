@@ -8,10 +8,11 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
+
+
 namespace WindowsGSM.Functions
 {
 
-#if GOOGLE
     class GoogleAnalytics
     {
         /// <summary>
@@ -206,5 +207,4 @@ namespace WindowsGSM.Functions
             return clientId;
         }
     }
-#endif
 }

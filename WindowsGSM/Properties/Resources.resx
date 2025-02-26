@@ -122,6 +122,6 @@
     <value>..\..\packages\MahApps.Metro.3.0.0\lib\net8.0-windows7.0\MahApps.Metro.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="Newtonsoft_Json" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\..\packages\newtonsoft.json.13.0.2\lib\net45\newtonsoft.json.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>..\..\packages\Newtonsoft.Json.13.0.3\lib\net6.0\newtonsoft.json.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>
