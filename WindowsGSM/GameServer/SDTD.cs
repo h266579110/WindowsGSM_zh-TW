@@ -122,7 +122,7 @@ namespace WindowsGSM.GameServer
 
             if (!File.Exists(exePath))
             {
-                Error = $"{exeName} not found ({exePath})";
+                Error = $"{exeName} 找不到 ({exePath})";
                 return null;
             }
 

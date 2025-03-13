@@ -57,7 +57,7 @@ namespace WindowsGSM.GameServer
             string javaPath = JavaHelper.FindJavaExecutableAbsolutePath();
             if (javaPath.Length == 0)
             {
-                Error = "Java is not installed";
+                Error = "Java 沒有安裝";
                 return null;
             }
 
@@ -66,14 +66,14 @@ namespace WindowsGSM.GameServer
             string serverJarPath = Path.Combine(workingDir, "server.jar");
             if (!File.Exists(serverJarPath))
             {
-                Error = $"server.jar not found ({serverJarPath})";
+                Error = $"server.jar 找不到 ({serverJarPath})";
                 return null;
             }
 
             string configPath = Path.Combine(workingDir, "server.properties");
             if (!File.Exists(configPath))
             {
-                Notice = $"server.properties not found ({configPath}). Generated a new one.";
+                Notice = $"server.properties 找不到 ({configPath}). 建立全新檔案.";
             }
 
             WindowsFirewall firewall = new WindowsFirewall("java.exe", javaPath);
@@ -157,10 +157,10 @@ namespace WindowsGSM.GameServer
             if (!JavaHelper.IsJREInstalled())
             {
                 //Java
-                result = MessageBox.Show("Java is not installed\n\nWould you like to install?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                result = MessageBox.Show("Java is not installed\n\nWould you like to install?", "確認", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (result != MessageBoxResult.Yes)
                 {
-                    Error = "Java is not installed";
+                    Error = "Java 沒有安裝";
                     return null;
                 }
 
@@ -318,7 +318,7 @@ namespace WindowsGSM.GameServer
             string jarFile = "server.jar";
             string jarPath = Path.Combine(path, jarFile);
 
-            Error = $"Invalid Path! Fail to find {jarFile}";
+            Error = $"無效路徑! 找不到 {jarFile}";
             return File.Exists(jarPath);
         }
 
@@ -329,7 +329,7 @@ namespace WindowsGSM.GameServer
 
             if (!File.Exists(logPath))
             {
-                Error = $"{logFile} is missing.";
+                Error = $"{logFile} 遺失.";
                 return string.Empty;
             }
 

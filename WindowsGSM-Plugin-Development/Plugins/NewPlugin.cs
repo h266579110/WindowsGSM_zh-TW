@@ -257,7 +257,7 @@ namespace WindowsGSM.Plugins
         {
             // Check paper.jar exists
             var exePath = Path.Combine(path, StartPath);
-            Error = $"Invalid Path! Fail to find {StartPath}";
+            Error = $"無效路徑! 找不到 {StartPath}";
             return File.Exists(exePath);
         }
 

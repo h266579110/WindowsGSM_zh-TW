@@ -48,7 +48,7 @@ namespace WindowsGSM.GameServer
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, @"AppData\Roaming\Stormworks", "server_config.xml");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             string param = _serverData.ServerParam;
@@ -104,7 +104,7 @@ namespace WindowsGSM.GameServer
 
         public bool IsImportValid(string path)
         {
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(StartPath)}";
             return File.Exists(Path.Combine(path, StartPath));
         }
 

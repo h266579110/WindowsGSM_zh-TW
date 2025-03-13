@@ -135,7 +135,7 @@ namespace WindowsGSM.GameServer
 
         public bool IsImportValid(string path)
         {
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(StartPath)}";
             return File.Exists(Path.Combine(path, StartPath));
         }
 

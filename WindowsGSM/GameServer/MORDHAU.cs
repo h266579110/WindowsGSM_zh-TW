@@ -74,14 +74,14 @@ namespace WindowsGSM.GameServer
             string shipExePath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (!File.Exists(shipExePath))
             {
-                Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath})";
+                Error = $"{Path.GetFileName(shipExePath)} 找不到 ({shipExePath})";
                 return null;
             }
 
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, @"Mordhau\Saved\Config\WindowsServer\Game.ini");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             string param = string.IsNullOrWhiteSpace(_serverData.ServerMap) ? string.Empty : _serverData.ServerMap;
@@ -172,7 +172,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string exePath = Path.Combine(path, "MordhauServer.exe");
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(exePath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(exePath)}";
             return File.Exists(exePath);
         }
 

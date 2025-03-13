@@ -56,7 +56,7 @@ namespace WindowsGSM
                     if (process.Id != Process.GetCurrentProcess().Id)
                     {
                         System.Media.SystemSounds.Beep.Play();
-                        MessageBox.Show("Another instance is already running", "WindowsGSM already running", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("已有另一個視窗正在執行", "WindowsGSM 已經執行", MessageBoxButton.OK, MessageBoxImage.Warning);
                         SetForegroundWindow(process.MainWindowHandle);
                         Process.GetCurrentProcess().Kill();
                     }
@@ -69,7 +69,7 @@ namespace WindowsGSM
                 string logPath = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "logs");
                 Directory.CreateDirectory(logPath);
 
-                string logFile = Path.Combine(logPath, $"CRASH_{DateTime.Now.ToString("yyyyMMdd")}.log");
+                string logFile = Path.Combine(logPath, $"CRASH_{DateTime.Now:yyyyMMdd}.log");
                 File.AppendAllText(logFile, $"WindowsGSM v{version}\n\n" + args.ExceptionObject);
 #if !DEBUG
                 string latestLogFile = Path.Combine(logPath, "latest_crash_wgsm_temp.log");
@@ -93,7 +93,7 @@ namespace WindowsGSM
 #endif
             };
 
-            MainWindow mainwindow = new MainWindow(showCrashHint);
+            MainWindow mainwindow = new(showCrashHint);
             mainwindow.Show();
         }
     }

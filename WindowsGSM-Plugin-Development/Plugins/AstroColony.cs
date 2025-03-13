@@ -77,7 +77,7 @@ namespace WindowsGSM.Plugins
             string shipExePath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
             if (!File.Exists(shipExePath))
             {
-                Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath})";
+                Error = $"{Path.GetFileName(shipExePath)} 找不到 ({shipExePath})";
                 return null;
             }
 

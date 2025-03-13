@@ -14,14 +14,14 @@ namespace WindowsGSM.DiscordBot.Modules
         [SlashCommand("list", "List all servers")]
         public async Task ListCommand()
         {
-            await Context.Interaction.RespondAsync(embed: await _actions.GetServerList(Context.User.Id.ToString()));
+            await Context.Interaction.RespondAsync(embed: await Actions.GetServerList(Context.User.Id.ToString()));
             Console.WriteLine($@"list-servers executed by {Context.User.Username}");
         }
 
         [SlashCommand("check", "Check server permissions")]
         public async Task CheckCommand()
         {
-            await Context.Interaction.RespondAsync(await _actions.GetServerPermissions(Context.User.Id.ToString()));
+            await Context.Interaction.RespondAsync(await Actions.GetServerPermissions(Context.User.Id.ToString()));
             Console.WriteLine($@"check executed by {Context.User.Username}");
         }
 
@@ -52,7 +52,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task StopAllCommand()
         {
             await Context.Interaction.DeferAsync();
-            await _actions.StopAllServer(Context.Interaction);
+            await Actions.StopAllServer(Context.Interaction);
             Console.WriteLine($@"stoped all servers executed by {Context.User.Username}");
         }
 
@@ -68,7 +68,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task RestartCommand([Summary("server"), Autocomplete] string serverId, string command)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.SendServerCommand(Context.Interaction, serverId, command);
+            await Actions.SendServerCommand(Context.Interaction, serverId, command);
             Console.WriteLine($@"send server {serverId} command [{command}] executed by {Context.User.Username}");
         }
 
@@ -76,7 +76,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task RestartCommandWithResponse([Summary("server"), Autocomplete] string serverId, string command)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.SendServerCommand(Context.Interaction, serverId, command);
+            await Actions.SendServerCommand(Context.Interaction, serverId, command);
             Console.WriteLine($@"sendR server {serverId} command [{command}] executed by {Context.User.Username}");
         }
 
@@ -84,7 +84,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task UpdateCommand([Summary("server"), Autocomplete] string serverId)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.UpdateServer(Context.Interaction, serverId);
+            await Actions.UpdateServer(Context.Interaction, serverId);
             Console.WriteLine($@"update server {serverId} executed by {Context.User.Username}");
         }
 
@@ -92,7 +92,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task BackupCommand([Summary("server"), Autocomplete] string serverId)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.BackupServer(Context.Interaction, serverId);
+            await Actions.BackupServer(Context.Interaction, serverId);
             Console.WriteLine($@"backup server {serverId} executed by {Context.User.Username}");
         }
     }

@@ -223,7 +223,7 @@ namespace WindowsGSM.GameServer
             string PMMPFile = "PocketMine-MP.phar";
             string PMMPPath = Path.Combine(path, PMMPFile);
 
-            Error = $"Invalid Path! Fail to find {PMMPFile}";
+            Error = $"無效路徑! 找不到 {PMMPFile}";
             return File.Exists(PMMPPath);
         }
 

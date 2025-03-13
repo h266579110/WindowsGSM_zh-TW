@@ -16,7 +16,7 @@ namespace WindowsGSM.DiscordBot
 	{
 		private DiscordSocketClient _client;
 		private string _donorType;
-		private SocketTextChannel _dashboardTextChannel;
+		private readonly SocketTextChannel _dashboardTextChannel;
 		private RestUserMessage _dashboardMessage;
 		private CancellationTokenSource _cancellationTokenSource;
 		private readonly IServiceProvider _serviceProvider = CreateServices();
@@ -42,8 +42,8 @@ namespace WindowsGSM.DiscordBot
 				return false;
 			}
 
-			// Listen Commands
-			new Commands(_client);
+            // Listen Commands
+            _ = new Commands(_client);
 			_interactions = new Interactions(_client, _serviceProvider);
 
 			return true;
@@ -54,8 +54,7 @@ namespace WindowsGSM.DiscordBot
 			try
 			{
                 Stream stream = DiscordBot.Configs.GetBotCustomImage();
-				if (stream == null) 
-					stream = Application.GetResourceStream(new Uri($"pack://application:,,,/Images/WindowsGSM{(string.IsNullOrWhiteSpace(_donorType) ? string.Empty : $"-{_donorType}")}.png")).Stream;
+				stream ??= Application.GetResourceStream(new Uri($"pack://application:,,,/Images/WindowsGSM{(string.IsNullOrWhiteSpace(_donorType) ? string.Empty : $"-{_donorType}")}.png")).Stream;
                 
                 await _client.CurrentUser.ModifyAsync(x =>
 				{
@@ -69,11 +68,10 @@ namespace WindowsGSM.DiscordBot
 			}
 
 			await _interactions.InitializeInteractions();
-			
-			List<Task> tasks = new List<Task>
-			{
+
+            List<Task> tasks = [
 				StartDiscordPresenceUpdate(),
-			};
+			];
 
 			_cancellationTokenSource = new CancellationTokenSource();
 
@@ -81,7 +79,7 @@ namespace WindowsGSM.DiscordBot
 			{
 				try
 				{
-					Task.WaitAny(tasks.ToArray(), _cancellationTokenSource.Token);
+					Task.WaitAny([.. tasks], _cancellationTokenSource.Token);
 				}
 				catch (AggregateException e)
 				{
@@ -152,7 +150,7 @@ namespace WindowsGSM.DiscordBot
 		
 		static IServiceProvider CreateServices()
 		{
-			var config = new DiscordSocketConfig()
+            DiscordSocketConfig config = new()
 			{
 				GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages |
 				                 GatewayIntents.GuildMessageReactions | GatewayIntents.GuildMessageTyping |

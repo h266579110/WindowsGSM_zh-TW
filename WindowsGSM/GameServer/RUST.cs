@@ -58,7 +58,7 @@ namespace WindowsGSM.GameServer
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"server.cfg not found ({configPath})";
+                Notice = $"server.cfg 找不到 ({configPath})";
             }
 
             string workingDir = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID);
@@ -124,7 +124,7 @@ namespace WindowsGSM.GameServer
 
         public bool IsImportValid(string path)
         {
-            Error = $"Invalid Path! Fail to find {StartPath}";
+            Error = $"無效路徑! 找不到 {StartPath}";
             return File.Exists(Path.Combine(path, StartPath));
         }
 

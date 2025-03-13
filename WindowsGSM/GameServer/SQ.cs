@@ -48,7 +48,7 @@ namespace WindowsGSM.GameServer
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, @"SquadGame\ServerConfig", "Server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -145,7 +145,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string importPath = Path.Combine(path, "SquadGameServer.exe");
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(importPath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(importPath)}";
             return File.Exists(importPath);
         }
 

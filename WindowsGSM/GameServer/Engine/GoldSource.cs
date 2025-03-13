@@ -33,14 +33,14 @@ namespace WindowsGSM.GameServer.Engine
             string hldsPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
             if (!File.Exists(hldsPath))
             {
-                Error = $"{StartPath} not found ({hldsPath})";
+                Error = $"{StartPath} 找不到 ({hldsPath})";
                 return null;
             }
 
             string configPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, Game, "server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"server.cfg not found ({configPath})";
+                Notice = $"server.cfg 找不到 ({configPath})";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -147,7 +147,7 @@ namespace WindowsGSM.GameServer.Engine
         public bool IsImportValid(string path)
         {
             string hldsPath = Path.Combine(path, StartPath);
-            Error = $"Invalid Path! Fail to find {StartPath}";
+            Error = $"無效路徑! 找不到 {StartPath}";
             return File.Exists(hldsPath);
         }
 

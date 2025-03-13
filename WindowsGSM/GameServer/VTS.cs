@@ -51,7 +51,7 @@ namespace WindowsGSM.GameServer
             string exePath = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (!File.Exists(exePath))
             {
-                Error = $"{Path.GetFileName(exePath)} not found ({exePath})";
+                Error = $"{Path.GetFileName(exePath)} 找不到 ({exePath})";
                 return null;
             }
 
@@ -224,7 +224,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string exePath = Path.Combine(path, StartPath);
-            Error = $"Invalid Path! Fail to find {StartPath}";
+            Error = $"無效路徑! 找不到 {StartPath}";
             return File.Exists(exePath);
         }
 

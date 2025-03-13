@@ -49,14 +49,14 @@ namespace WindowsGSM.GameServer
             string exePath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (!File.Exists(exePath))
             {
-                Error = $"{Path.GetFileName(exePath)} not found ({exePath})";
+                Error = $"{Path.GetFileName(exePath)} 找不到 ({exePath})";
                 return null;
             }
 
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "Server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             string param = "-batchmode -nographics " + _serverData.ServerParam;
@@ -110,7 +110,7 @@ namespace WindowsGSM.GameServer
 
         public bool IsImportValid(string path)
         {
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(StartPath)}";
             return File.Exists(Path.Combine(path, StartPath));
         }
 

@@ -81,7 +81,7 @@ namespace WindowsGSM.GameServer
                 string serverPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
                 if (!File.Exists(serverPath))
                 {
-                    Error = $"{StartPath} not found ({serverPath})";
+                    Error = $"{StartPath} 找不到 ({serverPath})";
                     return null;
                 }
             }
@@ -89,7 +89,7 @@ namespace WindowsGSM.GameServer
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "serverDZ.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             string param = $" {_serverData.ServerParam}";
@@ -160,7 +160,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string importPath = Path.Combine(path, StartPath);
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(StartPath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(StartPath)}";
             return File.Exists(importPath);
         }
 

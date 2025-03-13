@@ -48,7 +48,7 @@ namespace WindowsGSM.GameServer
             string shipExePath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (!File.Exists(shipExePath))
             {
-                Error = $"{Path.GetFileName(shipExePath)} not found ({shipExePath})";
+                Error = $"{Path.GetFileName(shipExePath)} 找不到 ({shipExePath})";
                 return null;
             }
 
@@ -141,7 +141,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string exePath = Path.Combine(path, "ConanSandboxServer.exe");
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(exePath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(exePath)}";
             return File.Exists(exePath);
         }
 

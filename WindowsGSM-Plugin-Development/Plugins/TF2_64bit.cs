@@ -47,14 +47,14 @@ namespace WindowsGSM.Plugins
             string srcdsPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
             if (!File.Exists(srcdsPath))
             {
-                Error = $"{StartPath} not found ({srcdsPath})";
+                Error = $"{StartPath} 找不到 ({srcdsPath})";
                 return null;
             }
 
             string configPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, Game, "cfg/server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"server.cfg not found ({configPath})";
+                Notice = $"server.cfg 找不到 ({configPath})";
             }
 
             StringBuilder sb = new StringBuilder();

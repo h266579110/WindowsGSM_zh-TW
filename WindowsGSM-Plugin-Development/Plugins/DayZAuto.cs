@@ -77,7 +77,7 @@ namespace WindowsGSM.Plugins
                 string serverPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, StartPath);
                 if (!File.Exists(serverPath))
                 {
-                    Error = $"{StartPath} not found ({serverPath})";
+                    Error = $"{StartPath} 找不到 ({serverPath})";
                     return null;
                 }
             }

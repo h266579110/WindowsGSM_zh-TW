@@ -77,7 +77,7 @@ namespace WindowsGSM.GameServer
             string configPath = Path.Combine(serverDataPath, "server.cfg");
             if (!File.Exists(configPath))
             {
-                Notice = $"server.cfg not found ({configPath})";
+                Notice = $"server.cfg 找不到 ({configPath})";
             }
 
             Process p;
@@ -264,7 +264,7 @@ namespace WindowsGSM.GameServer
             string exeFile = @"server\FXServer.exe";
             string exePath = Path.Combine(path, exeFile);
 
-            Error = $"Invalid Path! Fail to find {exeFile}";
+            Error = $"無效路徑! 找不到 {exeFile}";
             return File.Exists(exePath);
         }
 

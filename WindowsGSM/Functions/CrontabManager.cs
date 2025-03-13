@@ -25,20 +25,11 @@ namespace WindowsGSM.Functions
         ServerConsoleCommand = 3
     }
 
-    public struct CrontabEntry
-    {
-        public CrontabSchedule Expression;
-        public CrontabType Type;
-        public string Command;
-        public string Payload;
-
-        public CrontabEntry(CrontabSchedule expression, CrontabType type, string command = "", string payload = "")
-        {
-            Expression = expression;
-            Type = type;
-            Command = command;
-            Payload = payload;
-        }
+    public struct CrontabEntry(CrontabSchedule expression, CrontabType type, string command = "", string payload = "") {
+        public CrontabSchedule Expression = expression;
+        public CrontabType Type = type;
+        public string Command = command;
+        public string Payload = payload;
     }
     /** 
      * Manages the crontab sceduling and execution. As this method calls some Window Functions that access the GUI, you can not call this module from any other than the main thread (async is fine though).
@@ -89,9 +80,9 @@ namespace WindowsGSM.Functions
         {
             string configFolder = ServerPath.GetServersConfigs(Server.ID, ConfigFolder);
 
-            crontabSchedules = new List<CrontabEntry>();
+            crontabSchedules = [];
             //add gui entry
-            crontabSchedules.AddEntry(Window.GetServerMetadata(int.Parse(Server.ID)).CrontabFormat, CrontabType.Restart);
+            crontabSchedules.AddEntry(GetServerMetadata(int.Parse(Server.ID)).CrontabFormat, CrontabType.Restart);
 
             var files = Directory.GetFiles(configFolder, "*.csv", SearchOption.AllDirectories);
             foreach (var file in files)
@@ -124,7 +115,7 @@ namespace WindowsGSM.Functions
                                 continue;
                             case CrontabType.ServerConsoleCommand:
                                 //we want to gather everything after the xth ;, as the commands could include some themself
-                                string payload = line.Substring(line.GetNthIndex(';', 2) + 1);
+                                string payload = line[(line.GetNthIndex(';', 2) + 1)..];
                                 crontabSchedules.AddEntry(tokens[0], type, payload);
                                 continue;
                             case CrontabType.Exec:
@@ -132,7 +123,7 @@ namespace WindowsGSM.Functions
                                 if (tokens.Length >= 4)
                                 {
                                     //we want to gather everything after the xth ;, as the commands could include some themself
-                                    execPayload = line.Substring(line.GetNthIndex(';', 3) + 1);
+                                    execPayload = line[(line.GetNthIndex(';', 3) + 1)..];
                                 }
                                 crontabSchedules.AddEntry(tokens[0], type, tokens[2], execPayload);
                                 Console.WriteLine($" add exec entry with command {tokens[2]} and arguments {execPayload}");
@@ -152,7 +143,7 @@ namespace WindowsGSM.Functions
             while (Process != null && !Process.HasExited && runLoop)
             {
                 //If not enable return
-                if (!Window.GetServerMetadata(serverId).RestartCrontab || crontabSchedules == null)
+                if (!GetServerMetadata(serverId).RestartCrontab || crontabSchedules == null)
                 {
                     await Task.Delay(1000);
                     continue;
@@ -161,7 +152,7 @@ namespace WindowsGSM.Functions
                 //Try get next DataTime restart
                 //CrontabSchedule guiCrontab = CrontabSchedule.TryParse(Window.GetServerMetadata(serverId).CrontabFormat);
                 //DateTime? crontabTime = guiCrontab?.GetNextOccurrence(DateTime.Now);
-                List<(int index, DateTime? nextOccurrence)> nextOccurrences = new List<(int index, DateTime? nextOccurrence)>();
+                List<(int index, DateTime? nextOccurrence)> nextOccurrences = [];
                 for (int i = 0; i < crontabSchedules.Count; i++)
                 {
                     nextOccurrences.Add((i, crontabSchedules[i].Expression?.GetNextOccurrence(DateTime.Now)));
@@ -201,7 +192,7 @@ namespace WindowsGSM.Functions
             //add switch for type
             CrontabEntry entry = crontabSchedules[next.index];
 #if DEBUG
-            Console.WriteLine($"Execute Scedule: {entry.Expression}, {entry.Command}, {entry.Payload}");
+            Console.WriteLine($"執行排程: {entry.Expression}, {entry.Command}, {entry.Payload}");
 #endif 
             switch (entry.Type)
             {
@@ -209,15 +200,15 @@ namespace WindowsGSM.Functions
                     return;
                 case CrontabType.Restart:
                     await RestartServer();
-                    Window.UpdateCrontabTime(Server.ID, entry.Expression?.GetNextOccurrence(DateTime.Now).ToString("ddd, MM/dd/yyyy HH:mm:ss"));
+                    Window.UpdateCrontabTime(Server.ID, entry.Expression?.GetNextOccurrence(DateTime.Now).ToString("yyyy/MM/dd/ddd HH:mm:ss"));
                     runLoop = false; //thread will be killed soon, so stop this crontab instance
                     return;
                 case CrontabType.Exec:
-                    Window.Log(Server.ID, $"Execute Scedules: {entry.Command}");
+                    Window.Log(Server.ID, $"執行排程: {entry.Command}");
                     runningBackgroundTasks.Add(ExecuteWindowsCommand(entry.Command, entry.Payload));
                     return;
                 case CrontabType.ServerConsoleCommand:
-                    Window.Log(Server.ID, $"Execute Scedules: {entry.Command}");
+                    Window.Log(Server.ID, $"執行排程: {entry.Command}");
                     ExecuteServerConsoleCommand(entry.Command);
                     return;
             }
@@ -231,8 +222,7 @@ namespace WindowsGSM.Functions
         {
             return Task.Run(() =>
             {
-                Process p = new Process
-                {
+                Process p = new() {
                     StartInfo =
                     {
                         FileName = command,
@@ -246,7 +236,7 @@ namespace WindowsGSM.Functions
                     EnableRaisingEvents = true
                 };
 
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new();
                 p.Start();
                 while (!p.StandardOutput.EndOfStream)
                 {
@@ -256,7 +246,7 @@ namespace WindowsGSM.Functions
                 var file = ServerPath.GetLogs($"Server_{Server.ID}_{command}_execLog.log");
                 File.AppendAllText(file, sb.ToString());
 #if DEBUG
-                Console.WriteLine($"Executed Exec, consoleData: {sb.ToString()}");
+                Console.WriteLine($"Executed Exec, consoleData: {sb}");
 #endif
             });
         }
@@ -275,35 +265,35 @@ namespace WindowsGSM.Functions
             int serverId = int.Parse(Server.ID);
 
             //Restart the server
-            if (Window.GetServerMetadata(Server.ID).ServerStatus == ServerStatus.Started)
+            if (GetServerMetadata(Server.ID).ServerStatus == ServerStatus.Started)
             {
                 //Begin Restart
                 _serverMetadata[int.Parse(Server.ID)].ServerStatus = ServerStatus.Restarting;
-                Window.Log(Server.ID, "Action: Restart");
-                Window.SetServerStatus(Server, "Restarting");
+                Window.Log(Server.ID, "操作: 重啟");
+                Window.SetServerStatus(Server, "重啟中");
 
                 await Window.Server_BeginStop(Server, Process);
 
-                if (Window.GetServerMetadata(Server.ID).UpdateOnStart)
+                if (GetServerMetadata(Server.ID).UpdateOnStart)
                 {
-                    await Window.GameServer_Update(Server, " | Update on Start");
+                    await Window.GameServer_Update(Server, " | 啟動時更新");
                 }
 
                 var gameServer = await Window.Server_BeginStart(Server);
                 if (gameServer == null) { return; }
 
                 _serverMetadata[int.Parse(Server.ID)].ServerStatus = ServerStatus.Started;
-                Window.Log(Server.ID, "Server: Restarted | Restart Crontab");
+                Window.Log(Server.ID, "伺服器: 已重啟 | 例行性重啟");
                 if (!string.IsNullOrWhiteSpace(gameServer.Notice))
                 {
-                    Window.Log(Server.ID, "[Notice] " + gameServer.Notice);
+                    Window.Log(Server.ID, "[注意] " + gameServer.Notice);
                 }
-                Window.SetServerStatus(Server, "Started", ServerCache.GetPID(Server.ID).ToString());
+                Window.SetServerStatus(Server, "已啟動", ServerCache.GetPID(Server.ID).ToString());
 
-                if (Window.GetServerMetadata(serverId).DiscordAlert && Window.GetServerMetadata(serverId).RestartCrontabAlert)
+                if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).RestartCrontabAlert)
                 {
-                    var webhook = new DiscordWebhook(Window.GetServerMetadata(serverId).DiscordWebhook, Window.GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType);
-                    await webhook.Send(Server.ID, Server.Game, "Restarted | Restart Crontab", Server.Name, Server.IP, Server.Port);
+                    var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType);
+                    await webhook.Send(Server.ID, Server.Game, "已重啟 | 例行性重啟", Server.Name, GetPublicIP(), Server.Port);
                     Window._latestWebhookSend = ServerStatus.Restarted;
                 }
             }

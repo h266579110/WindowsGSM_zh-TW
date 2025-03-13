@@ -6,6 +6,7 @@ using System.Web;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Linq;
+using WindowsGSM.DiscordBot;
 
 namespace WindowsGSM.Functions
 {
@@ -29,11 +30,11 @@ namespace WindowsGSM.Functions
             {
                 return false;
             }
-
+            
             string avatarUrl = GetAvatarUrl();
             string json = @"
             {
-                ""username"": ""WindowsGSM"",
+                ""username"": """ + Configs.GetBotName() + @""",
                 ""avatar_url"": """ + avatarUrl  + @""",
                 ""content"": """ + HttpUtility.JavaScriptStringEncode(_customMessage) + @""",
                 ""embeds"": [
@@ -42,17 +43,17 @@ namespace WindowsGSM.Functions
                     ""color"": " + GetColor(serverstatus) + @",
                     ""fields"": [
                     {
-                        ""name"": ""Status"",
+                        ""name"": ""狀態"",
                         ""value"": """ + GetStatusWithEmoji(serverstatus) + @""",
                         ""inline"": true
                     },
                     {
-                        ""name"": ""Game Server"",
+                        ""name"": ""遊戲伺服器"",
                         ""value"": """ + servergame + @""",
                         ""inline"": true
                     },
                     {
-                        ""name"": ""Server IP:Port"",
+                        ""name"": ""伺服器 IP:Port"",
                         ""value"": """ + serverip + ":"+ serverport + @""",
                         ""inline"": true
                     }],
@@ -61,7 +62,7 @@ namespace WindowsGSM.Functions
                         ""icon_url"": """ + GetServerGameIcon(servergame) + @"""
                     },
                     ""footer"": {
-                        ""text"": """ + MainWindow.WGSM_VERSION + @" - Discord Alert"",
+                        ""text"": ""WindowsGSM " + MainWindow.WGSM_VERSION + @" - Discord 警報"",
                         ""icon_url"": """ + avatarUrl + @"""
                     },
                     ""timestamp"": """ + DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.mssZ") + @""",
@@ -91,19 +92,19 @@ namespace WindowsGSM.Functions
 
         private static string GetColor(string serverStatus)
         {
-            if (serverStatus.Contains("Started"))
+            if (serverStatus.Contains("已啟動"))
             {
                 return "65280"; //Green
             }
-            else if (serverStatus.Contains("Restarted"))
+            else if (serverStatus.Contains("已重啟"))
             {
                 return "65535"; //Cyan
             }
-            else if (serverStatus.Contains("Crashed"))
+            else if (serverStatus.Contains("當機"))
             {
                 return "16711680"; //Red
             }
-            else if (serverStatus.Contains("Updated"))
+            else if (serverStatus.Contains("已更新"))
             {
                 return "16564292"; //Gold
             }
@@ -113,19 +114,19 @@ namespace WindowsGSM.Functions
 
         private static string GetStatusWithEmoji(string serverStatus)
         {
-            if (serverStatus.Contains("Started"))
+            if (serverStatus.Contains("已啟動"))
             {
                 return ":green_circle: " + serverStatus;
             }
-            if (serverStatus.Contains("Restarted"))
+            if (serverStatus.Contains("已重啟"))
             {
                 return ":blue_circle: " + serverStatus;
             }
-            if (serverStatus.Contains("Crashed"))
+            if (serverStatus.Contains("當機"))
             {
                 return ":red_circle: " + serverStatus;
             }
-            if (serverStatus.Contains("Updated"))
+            if (serverStatus.Contains("已更新"))
             {
                 return ":orange_circle: " + serverStatus;
             }
@@ -136,19 +137,19 @@ namespace WindowsGSM.Functions
         private static string GetThumbnail(string serverStatus)
         {
             string url = "https://github.com/WindowsGSM/Discord-Alert-Icons/raw/master/";
-            if (serverStatus.Contains("Started"))
+            if (serverStatus.Contains("已啟動"))
             {
                 return $"{url}Started.png";
             }
-            if (serverStatus.Contains("Restarted"))
+            if (serverStatus.Contains("已重啟"))
             {
                 return $"{url}Restarted.png";
             }
-            if (serverStatus.Contains("Crashed"))
+            if (serverStatus.Contains("當機"))
             {
                 return $"{url}Crashed.png";
             }
-            if (serverStatus.Contains("Updated"))
+            if (serverStatus.Contains("已更新"))
             {
                 return $"{url}Updated.png";
             }

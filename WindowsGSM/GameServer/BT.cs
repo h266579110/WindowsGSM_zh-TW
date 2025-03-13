@@ -53,14 +53,14 @@ namespace WindowsGSM.GameServer
             string exePath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (!File.Exists(exePath))
             {
-                Error = $"{Path.GetFileName(exePath)} not found ({exePath})";
+                Error = $"{Path.GetFileName(exePath)} 找不到 ({exePath})";
                 return null;
             }
 
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "serversettings.xml");
             if (!File.Exists(configPath))
             {
-                Notice = $"{Path.GetFileName(configPath)} not found ({configPath})";
+                Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
             string param = _serverData.ServerParam;
@@ -114,7 +114,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string exePath = Path.Combine(path, StartPath);
-            Error = $"Invalid Path! Fail to find {Path.GetFileName(exePath)}";
+            Error = $"無效路徑! 找不到 {Path.GetFileName(exePath)}";
             return File.Exists(exePath);
         }
 
