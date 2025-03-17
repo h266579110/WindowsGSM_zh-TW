@@ -8,11 +8,11 @@ namespace WindowsGSM.Functions.CPU
     {
         public static string GetAffinityValidatedString(string bits)
         {
-            bits = bits ?? string.Empty;
+            bits ??= string.Empty;
             bits = (bits.Length < Environment.ProcessorCount) ? string.Concat(Enumerable.Repeat("1", Environment.ProcessorCount)) : bits;
             bits = (bits.Length > Environment.ProcessorCount) ? bits.Take(Environment.ProcessorCount).ToString() : bits;
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (char bit in bits)
             {
                 sb.Append((bit == '0') ? '0' : '1');
@@ -20,12 +20,7 @@ namespace WindowsGSM.Functions.CPU
             string returnBits = sb.ToString();
 
             // Cannot all '0', at least one '1'
-            if (!returnBits.Contains("1"))
-            {
-                return string.Concat(Enumerable.Repeat("1", Environment.ProcessorCount));
-            }
-
-            return returnBits;
+            return !returnBits.Contains('1') ? string.Concat(Enumerable.Repeat("1", Environment.ProcessorCount)) : returnBits;
         }
 
         public static IntPtr GetAffinityIntPtr(string bits)

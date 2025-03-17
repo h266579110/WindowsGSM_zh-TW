@@ -37,23 +37,19 @@ namespace WindowsGSM.GameServer.Query
                 {
                     byte[] requestData;
                     byte[] responseData;
-                    using (UdpClientHandler udpHandler = new UdpClientHandler(_IPEndPoint))
+                    using (UdpClientHandler udpHandler = new(_IPEndPoint))
                     {
                         // Send FIVEM_INFO request
-                        requestData = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF }
-                            .Concat(FIVEM_INFO)
-                            .ToArray();
+                        requestData = [0xFF, 0xFF, 0xFF, 0xFF, .. FIVEM_INFO];
 
                         // Receive response (Skip "\FF\FF\FF\FFinfoResponse\n\\")
-                        responseData = udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout)
-                            .Skip(18)
-                            .ToArray();
+                        responseData = [.. udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout).Skip(18)];
                     }
 
                     string[] splits = Encoding.UTF8.GetString(responseData).Split('\\');
 
                     // Store response's data
-                    var keys = new Dictionary<string, string>();
+                    Dictionary<string, string> keys = [];
                     for (int i = 0; i < splits.Length; i += 2)
                     {
                         keys.Add(splits[i], splits[i + 1]);

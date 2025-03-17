@@ -20,12 +20,10 @@ namespace WindowsGSM.Functions
             {
                 try
                 {
-                    using (Stream inStream = File.OpenRead(sourceArchiveFileName))
-                    using (Stream gzipStream = new GZipInputStream(inStream))
-                    using (TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream))
-                    {
-                        tarArchive.ExtractContents(destinationDirectoryName);
-                    }
+                    using Stream inStream = File.OpenRead(sourceArchiveFileName);
+                    using Stream gzipStream = new GZipInputStream(inStream);
+                    using TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream, System.Text.Encoding.UTF8);
+                    tarArchive.ExtractContents(destinationDirectoryName);
 
                     return true;
                 }

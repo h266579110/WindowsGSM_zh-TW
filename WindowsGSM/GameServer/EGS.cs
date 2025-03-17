@@ -6,12 +6,11 @@ using System.Text.RegularExpressions;
 
 namespace WindowsGSM.GameServer
 {
-    class EGS
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class EGS(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Empyrion - Galactic Survival Dedicated Server";
         public string StartPath = "EmpyrionLauncher.exe";
@@ -27,11 +26,6 @@ namespace WindowsGSM.GameServer
 
         public string AppId = "530870";
 
-        public EGS(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "dedicated.yaml");
@@ -40,7 +34,7 @@ namespace WindowsGSM.GameServer
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{Srv_Port}}", _serverData.ServerPort);
                 configText = configText.Replace("{{Srv_Name}}", _serverData.ServerName);
-                configText = configText.Replace("{{Srv_Password}}", _serverData.GetRCONPassword());
+                configText = configText.Replace("{{Srv_Password}}", Functions.ServerConfig.GetRCONPassword());
                 configText = configText.Replace("{{Srv_MaxPlayers}}", _serverData.ServerMaxPlayer);
                 configText = configText.Replace("{{Tel_Port}}", (int.Parse(_serverData.ServerPort) + 4).ToString());
                 File.WriteAllText(configPath, configText);
@@ -62,8 +56,7 @@ namespace WindowsGSM.GameServer
                 Notice = $"{Path.GetFileName(configPath)} 找不到 ({configPath})";
             }
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID),
@@ -87,7 +80,7 @@ namespace WindowsGSM.GameServer
                 {
                     try
                     {
-                        Regex regex = new Regex(@" --attach (\d{1,})"); // Match " --attach 7144"
+                        Regex regex = new(@" --attach (\d{1,})"); // Match " --attach 7144"
                         string dedicatedProcessId = regex.Match(commandLine).Groups[1].Value; // Get first group -> "7144"
                         Process dedicatedProcess = await Task.Run(() => Process.GetProcessById(int.Parse(dedicatedProcessId)));
                         dedicatedProcess.StartInfo.CreateNoWindow = true; // Just set as metadata
@@ -107,7 +100,7 @@ namespace WindowsGSM.GameServer
             return null;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -117,7 +110,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId);
             Error = steamCMD.Error;
 
@@ -126,7 +119,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
             Error = error;
             return p;
         }
@@ -144,13 +137,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

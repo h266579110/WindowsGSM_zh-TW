@@ -11,11 +11,9 @@ using Newtonsoft.Json.Linq;
 
 namespace WindowsGSM.Plugins
 {
-    public class Skeleton
-    {
+    public class Skeleton(ServerConfig serverData) {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "",
             author = "",
             description = "",
@@ -23,11 +21,7 @@ namespace WindowsGSM.Plugins
             url = "",
             color = "#ffffff"
         };
-
-
-        // - Standard Constructor and properties
-        public Skeleton(ServerConfig serverData) => _serverData = serverData;
-        private readonly ServerConfig _serverData;
+        private readonly ServerConfig _serverData = serverData;
         public string Error, Notice;
 
 
@@ -48,63 +42,63 @@ namespace WindowsGSM.Plugins
 
 
         // - Create a default cfg for the game server after installation
-        public async void CreateServerCFG()
+        public static async void CreateServerCFG()
         {
 
         }
 
 
         // - Start server function, return its Process to WindowsGSM
-        public async Task<Process> Start()
+        public static async Task<Process> Start()
         {
             return null;
         }
 
 
         // - Stop server function
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
 
         }
 
 
         // - Install server function
-        public async Task<Process> Install()
+        public static async Task<Process> Install()
         {
             return null;
         }
 
 
         // - Update server function
-        public async Task<Process> Update()
+        public static async Task<Process> Update()
         {
             return null;
         }
 
 
         // - Check if the installation is successful
-        public bool IsInstallValid()
+        public static bool IsInstallValid()
         {
             return false;
         }
 
 
         // - Check if the directory contains paper.jar for import
-        public bool IsImportValid(string path)
+        public static bool IsImportValid(string path)
         {
             return false;
         }
 
 
         // - Get Local server version
-        public string GetLocalBuild()
+        public static string GetLocalBuild()
         {
             return "";
         }
 
 
         // - Get Latest server version
-        public async Task<string> GetRemoteBuild()
+        public static async Task<string> GetRemoteBuild()
         {
             return "";
         }

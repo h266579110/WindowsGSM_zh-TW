@@ -11,8 +11,7 @@ namespace WindowsGSM.Plugins
     public class Skeleton_SteamCMDAgent : SteamCMDAgent
     {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "",
             author = "",
             description = "",
@@ -49,21 +48,21 @@ namespace WindowsGSM.Plugins
 
 
         // - Create a default cfg for the game server after installation
-        public async void CreateServerCFG()
+        public static async void CreateServerCFG()
         {
 
         }
 
 
         // - Start server function, return its Process to WindowsGSM
-        public async Task<Process> Start()
+        public static async Task<Process> Start()
         {
             return null;
         }
 
 
         // - Stop server function
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
 
         }

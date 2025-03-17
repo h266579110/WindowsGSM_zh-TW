@@ -12,18 +12,18 @@ namespace WindowsGSM.GameServer.Addon
             string version = "1.10";
             string path = Functions.ServerPath.GetServersServerFiles(serverId, modFolder);
 
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    string fileName = await webClient.DownloadStringTaskAsync($"https://sm.alliedmods.net/smdrop/{version}/sourcemod-latest-windows");
-                    await webClient.DownloadFileTaskAsync($"https://sm.alliedmods.net/smdrop/{version}/{fileName}", Path.Combine(path, fileName));
-                    await Task.Run(() => { try { ZipFile.ExtractToDirectory(Path.Combine(path, fileName), path); } catch { } });
-                    await Task.Run(() => { try { File.Delete(Path.Combine(path, fileName)); } catch { } });
-                }
-            }
-            catch
-            {
+            try {
+                string fileName = await App.httpClient.GetStringAsync($"https://sm.alliedmods.net/smdrop/{version}/sourcemod-latest-windows");
+                string filePath = Path.Combine(path, fileName.Trim());
+                Stream stream = await App.httpClient.GetStreamAsync($"https://sm.alliedmods.net/smdrop/{version}/{fileName}");
+                using FileStream fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //string fileName = await webClient.DownloadStringTaskAsync($"https://sm.alliedmods.net/smdrop/{version}/sourcemod-latest-windows");
+                //await webClient.DownloadFileTaskAsync($"https://sm.alliedmods.net/smdrop/{version}/{fileName}", Path.Combine(path, fileName));
+                await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, path); } catch { } });
+                await Task.Run(() => { try { File.Delete(filePath); } catch { } });
+            } catch {
                 return false;
             }
 
@@ -35,20 +35,20 @@ namespace WindowsGSM.GameServer.Addon
             string version = "1.10";
             string path = Functions.ServerPath.GetServersServerFiles(serverId, modFolder);
 
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    string fileName = await webClient.DownloadStringTaskAsync($"https://mms.alliedmods.net/mmsdrop/{version}/mmsource-latest-windows");
-                    await webClient.DownloadFileTaskAsync($"https://mms.alliedmods.net/mmsdrop/{version}/{fileName}", Path.Combine(path, fileName));
-                    await Task.Run(() => { try { ZipFile.ExtractToDirectory(Path.Combine(path, fileName), path); } catch { } });
-                    await Task.Run(() => { try { File.Delete(Path.Combine(path, fileName)); } catch { } });
-                }
+            try {
+                string fileName = await App.httpClient.GetStringAsync($"https://mms.alliedmods.net/mmsdrop/{version}/mmsource-latest-windows");
+                string filePath = Path.Combine(path, fileName.Trim());
+                Stream stream = await App.httpClient.GetStreamAsync($"https://mms.alliedmods.net/mmsdrop/{version}/{fileName}");
+                using FileStream fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //string fileName = await webClient.DownloadStringTaskAsync($"https://mms.alliedmods.net/mmsdrop/{version}/mmsource-latest-windows");
+                //await webClient.DownloadFileTaskAsync($"https://mms.alliedmods.net/mmsdrop/{version}/{fileName}", Path.Combine(path, fileName));
+                await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, path); } catch { } });
+                await Task.Run(() => { try { File.Delete(filePath); } catch { } });
 
                 return true;
-            }
-            catch
-            {
+            } catch {
                 return false;
             }
         }

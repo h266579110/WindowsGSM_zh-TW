@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Reflection;
-using WindowsGSM.Functions;
 
 namespace WindowsGSM
 {
@@ -45,15 +42,12 @@ namespace WindowsGSM
 
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
             {
-                var resourceName = Assembly.GetExecutingAssembly().GetName().Name + ".ReferencesEx." + new AssemblyName(args.Name).Name + ".dll";
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
-                {
-                    if (stream != null)
-                    {
-                        var assemblyData = new byte[stream.Length];
-                        stream.Read(assemblyData, 0, assemblyData.Length);
-                        return Assembly.Load(assemblyData);
-                    }
+                string resourceName = Assembly.GetExecutingAssembly().GetName().Name + ".ReferencesEx." + new AssemblyName(args.Name).Name + ".dll";
+                using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+                if (stream != null) {
+                    byte[] assemblyData = new byte[stream.Length];
+                    stream.Read(assemblyData, 0, assemblyData.Length);
+                    return Assembly.Load(assemblyData);
                 }
 
                 return null;

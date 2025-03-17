@@ -3,22 +3,14 @@ using System.IO;
 
 namespace WindowsGSM.Functions
 {
-    class ServerAddon
-    {
-        private readonly string _serverId;
-        private readonly string _serverGame;
-        private readonly dynamic _gameServer;
-
-        public ServerAddon(string serverId, string serverGame)
-        {
-            _serverId = serverId;
-            _serverGame = serverGame;
-            _gameServer = GameServer.Data.Class.Get(serverGame);
-        }
+    class ServerAddon(string serverId, string serverGame) {
+        private readonly string _serverId = serverId;
+        private readonly string _serverGame = serverGame;
+        private readonly dynamic _gameServer = GameServer.Data.Class.Get(serverGame);
 
         public List<string> GetLeftListBox()
         {
-            var list = new List<string>();
+            List<string> list = [];
 
             if (_serverGame == GameServer.DAYZ.FullName)
             {
@@ -65,7 +57,7 @@ namespace WindowsGSM.Functions
 
         public List<string> GetRightListBox()
         {
-            var list = new List<string>();
+            List<string> list = [];
 
             if (_serverGame == GameServer.DAYZ.FullName)
             {
@@ -112,7 +104,7 @@ namespace WindowsGSM.Functions
             if (_serverGame == GameServer.DAYZ.FullName)
             {
                 string modPath = ServerPath.GetServersConfigs(_serverId, "DayZActivatedMods.cfg");
-                string text = string.Join("\n", rItems.ToArray());
+                string text = string.Join("\n", [.. rItems]);
                 File.WriteAllText(modPath, text);
                 return true;
             }
@@ -144,7 +136,7 @@ namespace WindowsGSM.Functions
             if (_serverGame == GameServer.DAYZ.FullName)
             {
                 string modPath = ServerPath.GetServersConfigs(_serverId, "DayZActivatedMods.cfg");
-                string text = string.Join("\n", rItems.ToArray());
+                string text = string.Join("\n", [.. rItems]);
                 File.WriteAllText(modPath, text);
                 return true;
             }
@@ -179,23 +171,13 @@ namespace WindowsGSM.Functions
             }
 
             dynamic gameServer = GameServer.Data.Class.Get(_serverGame);
-            if (gameServer is GameServer.Engine.Source)
-            {
-                return "SourceMod Plugins";
-            }
-
-            return string.Empty;
+            return gameServer is GameServer.Engine.Source ? "SourceMod Plugins" : string.Empty;
         }
 
         public static bool IsGameSupportManageAddons(string serverGame)
         {
             dynamic gameServer = GameServer.Data.Class.Get(serverGame);
-            if (gameServer is GameServer.Engine.Source)
-            {
-                return true;
-            }
-
-            return serverGame == GameServer.DAYZ.FullName;
+            return gameServer is GameServer.Engine.Source || serverGame == GameServer.DAYZ.FullName;
         }
     }
 }

@@ -27,7 +27,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <Optimize>False</Optimize>
-    <NoWarn>1998;1416;CA1416</NoWarn>
+    <NoWarn>1998;1416;CA1416;SYSLIB1045</NoWarn>
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -38,7 +38,7 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <DocumentationFile>
     </DocumentationFile>
-    <NoWarn>1998;1416;CA1416</NoWarn>
+    <NoWarn>1998;1416;CA1416;SYSLIB1045</NoWarn>
     <Optimize>False</Optimize>
   </PropertyGroup>
   <PropertyGroup>
@@ -72,6 +72,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Images\SteamCMD.png" />
@@ -289,42 +290,42 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Basic.Reference.Assemblies.Net80" Version="1.8.0" />
-    <PackageReference Include="ControlzEx" Version="7.0.0-rc0118" />
+    <PackageReference Include="ControlzEx" Version="7.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="System.CodeDom" Version="10.0.0-preview.1.25080.5" />
     <PackageReference Include="System.Security.Principal" Version="4.3.0" />
     <Reference Include="Discord.Net" Version="3.17.1" />
-    <PackageReference Include="Discord.Net.Commands" Version="3.17.1" />
-    <PackageReference Include="Discord.Net.Core" Version="3.17.1" />
-    <PackageReference Include="Discord.Net.Rest" Version="3.17.1" />
-    <PackageReference Include="Discord.Net.Webhook" Version="3.17.1" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="3.17.1" />
+    <PackageReference Include="Discord.Net.Commands" Version="3.17.2" />
+    <PackageReference Include="Discord.Net.Core" Version="3.17.2" />
+    <PackageReference Include="Discord.Net.Rest" Version="3.17.2" />
+    <PackageReference Include="Discord.Net.Webhook" Version="3.17.2" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.17.2" />
     <PackageReference Include="MahApps.Metro" Version="3.0.0-alpha0513" />
 	 <PackageReference Include="LiveCharts" Version="0.9.7.0" />
 	 <PackageReference Include="LiveCharts.Wpf" Version="0.9.7.0" />
-    <PackageReference Include="Discord.Net" Version="3.17.1" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" />
+    <PackageReference Include="Discord.Net" Version="3.17.2" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.3" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
     <PackageReference Include="Microsoft.NETCore.Platforms" Version="8.0.0-preview.7.23375.6" />
     <PackageReference Include="NCrontab.Signed" Version="3.3.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="OpenGSQ" Version="2.1.5" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
-    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.3" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.3" />
     <PackageReference Include="System.Interactive.Async" Version="6.0.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.Management" Version="9.0.0" />
-    <PackageReference Include="System.Net.Http.Json" Version="9.0.0" />
+    <PackageReference Include="System.Management" Version="9.0.3" />
+    <PackageReference Include="System.Net.Http.Json" Version="9.0.3" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
     <PackageReference Include="System.Runtime.Handles" Version="4.3.0" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters" Version="1.4.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="9.0.3" />
+    <PackageReference Include="System.Text.Json" Version="9.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters" Version="2.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.3" />
   </ItemGroup>
 </Project>

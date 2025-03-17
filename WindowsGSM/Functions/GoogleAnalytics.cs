@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,12 +35,12 @@ namespace WindowsGSM.Functions
             {
                 // https://stackoverflow.com/questions/2819934/detect-windows-version-in-net
                 string osBit = string.Empty;
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT OSArchitecture FROM Win32_OperatingSystem"))
+                using (ManagementObjectSearcher searcher = new("SELECT OSArchitecture FROM Win32_OperatingSystem"))
                 {
                     ManagementObjectCollection information = searcher.Get();
                     if (information != null)
                     {
-                        foreach (ManagementObject obj in information)
+                        foreach (ManagementObject obj in information.Cast<ManagementObject>())
                         {
                             osBit = obj["OSArchitecture"].ToString();
                         }
@@ -47,7 +48,7 @@ namespace WindowsGSM.Functions
                 }
 
                 string osName = new Microsoft.VisualBasic.Devices.ComputerInfo().OSFullName;
-                osBit = new string(osBit.Where(char.IsDigit).ToArray());
+                osBit = new string([.. osBit.Where(char.IsDigit)]);
                 SendHit("OSVersion", osName, $"{osName} - {osBit}-bit");
             });
         }
@@ -57,12 +58,12 @@ namespace WindowsGSM.Functions
             await Task.Run(() =>
             {
                 string cpuName = string.Empty;
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+                using (ManagementObjectSearcher searcher = new("SELECT Name FROM Win32_Processor"))
                 {
                     ManagementObjectCollection information = searcher.Get();
                     if (information != null)
                     {
-                        foreach (ManagementObject obj in information)
+                        foreach (ManagementObject obj in information.Cast<ManagementObject>())
                         {
                             cpuName = obj["Name"].ToString();
                         }
@@ -70,12 +71,12 @@ namespace WindowsGSM.Functions
                 }
 
                 int coreCount = 0;
-                foreach (var item in new ManagementObjectSearcher("Select NumberOfCores from Win32_Processor").Get())
+                foreach (ManagementBaseObject item in new ManagementObjectSearcher("Select NumberOfCores from Win32_Processor").Get())
                 {
                     coreCount += int.Parse(item["NumberOfCores"].ToString());
                 }
                 
-                SendHit("CPU", cpuName, $"{cpuName} - Cores: {coreCount.ToString()}");
+                SendHit("CPU", cpuName, $"{cpuName} - Cores: {coreCount}");
             });
         }
 
@@ -160,29 +161,29 @@ namespace WindowsGSM.Functions
             post += string.IsNullOrWhiteSpace(label) ? string.Empty : $"&el={Uri.EscapeDataString(label)}";
             post += string.IsNullOrWhiteSpace(value) ? string.Empty : $"&ev={Uri.EscapeDataString(value)}";
 
-            try
-            {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://www.google-analytics.com/collect");
-                request.Method = "POST";
-                request.ContentType = "application/x-www-form-urlencoded";
-                request.ContentLength = Encoding.UTF8.GetByteCount(post);
+            try {
+                HttpResponseMessage request = await App.httpClient.PostAsync("https://www.google-analytics.com/collect", new StringContent(post));
 
-                // write the request body to the request
-                using (var writer = new StreamWriter(await request.GetRequestStreamAsync()))
-                {
-                    writer.Write(post);
+                if (request.StatusCode != HttpStatusCode.OK) {
+                    Debug.WriteLine((int)request.StatusCode + "Google Analytics tracking did not return OK 200");
                 }
 
-                using (var webResponse = (HttpWebResponse)await request.GetResponseAsync())
-                {
-                    if (webResponse.StatusCode != HttpStatusCode.OK)
-                    {
-                        Debug.WriteLine((int)webResponse.StatusCode + "Google Analytics tracking did not return OK 200");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
+                //HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://www.google-analytics.com/collect");
+                //request.Method = "POST";
+                //request.ContentType = "application/x-www-form-urlencoded";
+                //request.ContentLength = Encoding.UTF8.GetByteCount(post);
+
+                //// write the request body to the request
+                //using (StreamWriter writer = new(await request.GetRequestStreamAsync()))
+                //{
+                //    writer.Write(post);
+                //}
+
+                //using HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync();
+                //if (webResponse.StatusCode != HttpStatusCode.OK) {
+                //    Debug.WriteLine((int)webResponse.StatusCode + "Google Analytics tracking did not return OK 200");
+                //}
+            } catch (Exception ex) {
                 Debug.WriteLine(ex);
             }
         }

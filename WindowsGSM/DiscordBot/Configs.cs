@@ -14,7 +14,7 @@ namespace WindowsGSM.DiscordBot
 		{
 			Directory.CreateDirectory(_botPath);
 
-			var namePath = Path.Combine(_botPath, "name.txt");
+            string namePath = Path.Combine(_botPath, "name.txt");
 
             if (!File.Exists(namePath))
 				File.WriteAllText(namePath, "WindowsGSM");
@@ -134,18 +134,18 @@ namespace WindowsGSM.DiscordBot
 		{
 			try
 			{
-				var adminIds = new List<string>();
-				var lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
-				foreach (var line in lines)
+                List<string> adminIds = [];
+                string[] lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
+				foreach (string line in lines)
 				{
-					string[] items = line.Split(new char[] { ' ' }, 2);
+					string[] items = line.Split([' '], 2);
 					adminIds.Add(items[0]);
 				}
 				return adminIds;
 			}
 			catch
 			{
-				return new List<string>();
+				return [];
 			}
 		}
 
@@ -153,21 +153,21 @@ namespace WindowsGSM.DiscordBot
 		{
 			try
 			{
-				var lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
-				foreach (var line in lines)
+                string[] lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
+				foreach (string line in lines)
 				{
-					string[] items = line.Split(new[] { ' ' }, 2);
+					string[] items = line.Split([' '], 2);
 					if (items[0] == adminId)
 					{
-						return items[1].Trim().Split(',').Select(s => s.Trim()).ToList();
+						return [.. items[1].Trim().Split(',').Select(s => s.Trim())];
 					}
 				}
 
-				return new List<string>();
+				return [];
 			}
 			catch
 			{
-				return new List<string>();
+				return [];
 			}
 		}
 
@@ -175,18 +175,18 @@ namespace WindowsGSM.DiscordBot
 		{
 			try
 			{
-				var adminList = new List<(string, string)>();
-				var lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
-				foreach (var line in lines)
+                List<(string, string)> adminList = [];
+                string[] lines = File.ReadAllLines(Path.Combine(_botPath, "adminIDs.txt"));
+				foreach (string line in lines)
 				{
-					string[] items = line.Split(new[] { ' ' }, 2);
+					string[] items = line.Split([' '], 2);
 					adminList.Add((items[0], items.Length == 1 ? string.Empty : items[1]));
 				}
 				return adminList;
 			}
 			catch
 			{
-				return new List<(string, string)>();
+				return [];
 			}
 		}
 
@@ -194,12 +194,12 @@ namespace WindowsGSM.DiscordBot
 		{
 			Directory.CreateDirectory(_botPath);
 
-			List<string> lines = new List<string>();
+			List<string> lines = [];
 			foreach ((string adminID, string serverIDs) in adminList)
 			{
 				lines.Add($"{adminID} {serverIDs}");
 			}
-			File.WriteAllText(Path.Combine(_botPath, "adminIDs.txt"), string.Join("\n", lines.ToArray()));
+			File.WriteAllText(Path.Combine(_botPath, "adminIDs.txt"), string.Join("\n", [.. lines]));
 		}
 	}
 }

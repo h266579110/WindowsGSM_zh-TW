@@ -14,32 +14,32 @@ namespace WindowsGSM_Plugin_Development
         static void Main(string[] args)
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;
-            var title = "Welcome to WindowsGSM Plugin Development Environment";
+            string title = "Welcome to WindowsGSM Plugin Development Environment";
             Console.WriteLine($"\t{string.Concat(Enumerable.Repeat("-", title.Length))}\t\t");
             Console.WriteLine($"\t{title}\t\t");
             Console.WriteLine($"\t{string.Concat(Enumerable.Repeat("-", title.Length))}\t\t");
             Console.ResetColor();
 
-            var currentDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            var wgsmRoot = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-            var wgsm = Path.Combine(wgsmRoot, "WindowsGSM");
-            var wgsnBin = Directory.CreateDirectory(Path.Combine(wgsm, "bin")).FullName; // Create \bin directory
+            string currentDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            string wgsmRoot = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
+            string wgsm = Path.Combine(wgsmRoot, "WindowsGSM");
+            string wgsnBin = Directory.CreateDirectory(Path.Combine(wgsm, "bin")).FullName; // Create \bin directory
 #if DEBUG
-            var target = "Debug";
+            string target = "Debug";
 #else
             var target = "Release";
 #endif
-            var wgsmTarget = Directory.CreateDirectory(Path.Combine(wgsnBin, target)).FullName; // Create \Debug or \Release directory
-            var wgsmPlugins = Directory.CreateDirectory(Path.Combine(wgsmTarget, "plugins")).FullName; // Create \plugins directory
-            var localPlugins = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "..", "..", "Plugins"));
+            string wgsmTarget = Directory.CreateDirectory(Path.Combine(wgsnBin, target)).FullName; // Create \Debug or \Release directory
+            string wgsmPlugins = Directory.CreateDirectory(Path.Combine(wgsmTarget, "plugins")).FullName; // Create \plugins directory
+            string localPlugins = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "..", "..", "Plugins"));
 
             Console.Write("\nSearching your new plugins in ");
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write($"({localPlugins})\n");
             Console.ResetColor();
 
-            var pluginsList = new List<string>();
-            foreach (var pluginFile in Directory.GetFiles(localPlugins, "*.cs", SearchOption.TopDirectoryOnly).ToList())
+            List<string> pluginsList = [];
+            foreach (string pluginFile in Directory.GetFiles(localPlugins, "*.cs", SearchOption.TopDirectoryOnly).ToList())
             {
                 pluginsList.Add(pluginFile);
                 Console.Write("Found => ");
@@ -53,10 +53,10 @@ namespace WindowsGSM_Plugin_Development
             Console.Write($"({wgsmPlugins})\n");
             Console.ResetColor();
 
-            foreach (var pluginFile in pluginsList)
+            foreach (string pluginFile in pluginsList)
             {
-                var pluginFolder = Directory.CreateDirectory(Path.Combine(wgsmPlugins, Path.GetFileName(pluginFile))).FullName;
-                var plugin = Path.Combine(pluginFolder, Path.GetFileName(pluginFile));
+                string pluginFolder = Directory.CreateDirectory(Path.Combine(wgsmPlugins, Path.GetFileName(pluginFile))).FullName;
+                string plugin = Path.Combine(pluginFolder, Path.GetFileName(pluginFile));
                 Console.Write("Install => ");
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.Write($"{Path.GetFileName(pluginFile)}");

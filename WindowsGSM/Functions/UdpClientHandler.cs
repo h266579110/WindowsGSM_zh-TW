@@ -53,11 +53,11 @@ namespace WindowsGSM.Functions
 
             _udpClient.Client.SendTimeout = sendTimeout;
             _udpClient.Client.ReceiveTimeout = receiveTimeout;
-            _udpClient.Send(requestData.ToArray(), length);
+            _udpClient.Send([.. requestData], length);
 #if DEBUG
             Console.WriteLine($"Started GetResponse from address {_endPoint.Address} and port {_endPoint.Port}");
 #endif
-            var response = _udpClient.Receive(ref _endPoint);
+            byte[] response = _udpClient.Receive(ref _endPoint);
 #if DEBUG
             Console.WriteLine($"Got Data from UDP client: {string.Join(",", response)} , asci: {string.Join(",", response.Select((b) => (char)b))}");
 #endif

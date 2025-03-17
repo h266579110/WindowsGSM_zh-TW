@@ -4,12 +4,11 @@ using System.IO;
 
 namespace WindowsGSM.GameServer
 {
-    class CE
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class CE(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Conan Exiles Dedicated Server";
         public string StartPath = @"ConanSandbox\Binaries\Win64\ConanSandboxServer-Win64-Shipping.exe";
@@ -25,11 +24,6 @@ namespace WindowsGSM.GameServer
 
         public string AppId = "443030";
 
-        public CE(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Download Engine.ini
@@ -38,7 +32,7 @@ namespace WindowsGSM.GameServer
             {
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{ServerName}}", _serverData.ServerName);
-                configText = configText.Replace("{{ServerPassword}}", _serverData.GetRCONPassword());
+                configText = configText.Replace("{{ServerPassword}}", Functions.ServerConfig.GetRCONPassword());
                 File.WriteAllText(configPath, configText);
             }
         }
@@ -90,7 +84,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                Functions.ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -101,7 +95,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -119,7 +113,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId);
             Error = steamCMD.Error;
 
@@ -128,7 +122,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
             Error = error;
             return p;
         }
@@ -147,13 +141,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

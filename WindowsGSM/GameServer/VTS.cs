@@ -5,16 +5,16 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Shell;
 using WindowsGSM.Functions;
 
 namespace WindowsGSM.GameServer
 {
-    class VTS
-    {
-        private readonly ServerConfig _serverData;
+    class VTS(ServerConfig serverData) {
+        private readonly ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Vintage Story Dedicated Server";
         public string StartPath = "VintageStoryServer.exe";
@@ -28,20 +28,15 @@ namespace WindowsGSM.GameServer
         public string Maxplayers = "16";
         public string Additional = "--dataPath ./data";
 
-        public VTS(ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Download serverconfig.json
-            var replaceValues = new List<(string, string)>()
-            {
+            List<(string, string)> replaceValues =
+            [
                 ("{{ServerName}}", _serverData.ServerName),
                 ("{{Port}}", _serverData.ServerPort),
                 ("{{MaxClients}}", _serverData.ServerMaxPlayer)
-            };
+            ];
 
             await Github.DownloadGameServerConfig(ServerPath.GetServersServerFiles(_serverData.ServerID, "data", "serverconfig.json"), FullName, replaceValues);
         }
@@ -55,8 +50,7 @@ namespace WindowsGSM.GameServer
                 return null;
             }
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = Directory.GetParent(exePath).FullName,
@@ -74,7 +68,7 @@ namespace WindowsGSM.GameServer
                 p.StartInfo.RedirectStandardInput = true;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
-                var serverConsole = new ServerConsole(_serverData.ServerID);
+                ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -87,7 +81,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -111,14 +105,14 @@ namespace WindowsGSM.GameServer
             string zipPath = ServerPath.GetServersServerFiles(_serverData.ServerID, zipName);
 
             // Download vs_server_win-x64_{version}.zip from https://cdn.vintagestory.at/gamefiles/stable/
-            using (WebClient webClient = new WebClient())
-            {
-                try { await webClient.DownloadFileTaskAsync(address, zipPath); } 
-                catch
-                {
-                    Error = $"Fail to download {zipName}";
-                    return null;
-                }
+            try {
+                Stream stream = await App.httpClient.GetStreamAsync(address);
+                using FileStream fileStream = File.Create(zipPath);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync(address, zipPath);
+            } catch {
+                Error = $"Fail to download {zipName}";
+                return null;
             }
 
             // Extract vs_server_win-x64_{version}.zip
@@ -246,12 +240,11 @@ namespace WindowsGSM.GameServer
             // Get latest build in https://aur.archlinux.org/cgit/aur.git/log/?h=vintagestory with regex
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string html = await webClient.DownloadStringTaskAsync("https://aur.archlinux.org/cgit/aur.git/log/?h=vintagestory");
-                    Regex regex = new Regex(@"(\d{1,}\.\d{1,}\.\d{1,})<\/a>"); // Match "1.12.14</a>"
-                    return regex.Match(html).Groups[1].Value; // Get first group -> "1.12.14"
-                }
+                //using WebClient webClient = new();
+                string html = await App.httpClient.GetStringAsync("https://aur.archlinux.org/cgit/aur.git/log/?h=vintagestory");
+                //string html = await webClient.DownloadStringTaskAsync("https://aur.archlinux.org/cgit/aur.git/log/?h=vintagestory");
+                Regex regex = new(@"(\d{1,}\.\d{1,}\.\d{1,})<\/a>"); // Match "1.12.14</a>"
+                return regex.Match(html).Groups[1].Value; // Get first group -> "1.12.14"
             }
             catch
             {

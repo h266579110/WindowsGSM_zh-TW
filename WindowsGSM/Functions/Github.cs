@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System;
 using System.Collections.Generic;
+using Discord;
 
 namespace WindowsGSM.Functions
 {
@@ -22,10 +23,11 @@ namespace WindowsGSM.Functions
 
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{gameFullName.Replace(":", "")}/{System.IO.Path.GetFileName(filePath)}", filePath);
-                }
+                Stream stream = await App.httpClient.GetStreamAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{gameFullName.Replace(":", "")}/{System.IO.Path.GetFileName(filePath)}");
+                using FileStream fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{gameFullName.Replace(":", "")}/{System.IO.Path.GetFileName(filePath)}", filePath);
             }
             catch (Exception e)
             {
@@ -57,10 +59,11 @@ namespace WindowsGSM.Functions
             try
             {
                 // Download config file from github
-                using (WebClient webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{serverGame.Replace(":", "")}/{Path.GetFileName(configPath)}", configPath);
-                }
+                Stream stream = await App.httpClient.GetStreamAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{serverGame.Replace(":", "")}/{Path.GetFileName(configPath)}");
+                using FileStream fileStream = File.Create(configPath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync($"https://github.com/WindowsGSM/Game-Server-Configs/raw/master/{serverGame.Replace(":", "")}/{Path.GetFileName(configPath)}", configPath);
 
                 // Replace values
                 string configText = File.ReadAllText(configPath);

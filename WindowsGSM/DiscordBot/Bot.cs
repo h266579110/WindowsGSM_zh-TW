@@ -16,7 +16,7 @@ namespace WindowsGSM.DiscordBot
 	{
 		private DiscordSocketClient _client;
 		private string _donorType;
-		private readonly SocketTextChannel _dashboardTextChannel;
+		private readonly SocketTextChannel _dashboardTextChannel = default;
 		private RestUserMessage _dashboardMessage;
 		private CancellationTokenSource _cancellationTokenSource;
 		private readonly IServiceProvider _serviceProvider = CreateServices();

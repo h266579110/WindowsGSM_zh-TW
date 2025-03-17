@@ -16,9 +16,9 @@ public class RoslynCompiler
 {
     readonly CSharpCompilation _compilation;
     Assembly _generatedAssembly;
-    Type? _proxyType;
-    string _assemblyName;
-    string _typeName;
+    Type _proxyType;
+    readonly string _assemblyName;
+    readonly string _typeName;
     PluginMetadata _pluginMetadata;
 
     public RoslynCompiler(string typeName, string code, Type[] typesToReference, PluginMetadata pluginMetadata)
@@ -26,7 +26,7 @@ public class RoslynCompiler
         _pluginMetadata = pluginMetadata;
         _typeName = typeName;
 
-        var refs = typesToReference.Select(h => MetadataReference.CreateFromFile(h.Assembly.Location) as MetadataReference).ToList();
+        List<MetadataReference> refs = [.. typesToReference.Select(h => MetadataReference.CreateFromFile(h.Assembly.Location) as MetadataReference)];
         refs.AddRange(Net80.References.All);
         refs.Add(MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location), "System.Runtime.dll")));
         refs.Add(MetadataReference.CreateFromFile(Path.Combine(Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location), "System.Private.CoreLib.dll")));
@@ -35,8 +35,8 @@ public class RoslynCompiler
         refs.Add(MetadataReference.CreateFromFile(typeof(ZipFile).Assembly.Location));
 
         //generate syntax tree from code and config compilation options
-        var syntax = CSharpSyntaxTree.ParseText(code);
-        var options = new CSharpCompilationOptions(
+        SyntaxTree syntax = CSharpSyntaxTree.ParseText(code);
+        CSharpCompilationOptions options = new(
             OutputKind.DynamicallyLinkedLibrary,
             allowUnsafe: true,
             optimizationLevel: OptimizationLevel.Release);
@@ -49,43 +49,37 @@ public class RoslynCompiler
 
         if (_proxyType != null) return _proxyType;
 
-        using (var ms = new MemoryStream())
-        {
-            var result = _compilation.Emit(ms);
-            if (!result.Success)
-            {
-                var compilationErrors = result.Diagnostics.Where(diagnostic =>
+        using MemoryStream ms = new();
+        Microsoft.CodeAnalysis.Emit.EmitResult result = _compilation.Emit(ms);
+        if (!result.Success) {
+            List<Diagnostic> compilationErrors = [.. result.Diagnostics.Where(diagnostic =>
                         diagnostic.IsWarningAsError ||
-                        diagnostic.Severity == DiagnosticSeverity.Error)
-                    .ToList();
-                if (compilationErrors.Any())
-                {
-                    var firstError = compilationErrors.First();
-                    var errorNumber = firstError.Id;
-                    var errorDescription = firstError.GetMessage();
-                    var firstErrorMessage = $"{errorNumber}: {errorDescription};";
-                    var exception = new Exception($"Compilation failed, first error is: {firstErrorMessage}");
-                    compilationErrors.ForEach(e => { if (!exception.Data.Contains(e.Id)) exception.Data.Add(e.Id, e.GetMessage()); });
+                        diagnostic.Severity == DiagnosticSeverity.Error)];
+            if (compilationErrors.Any()) {
+                Diagnostic firstError = compilationErrors.First();
+                string errorNumber = firstError.Id;
+                string errorDescription = firstError.GetMessage();
+                string firstErrorMessage = $"{errorNumber}: {errorDescription};";
+                Exception exception = new($"Compilation failed, first error is: {firstErrorMessage}");
+                compilationErrors.ForEach(e => { if (!exception.Data.Contains(e.Id)) exception.Data.Add(e.Id, e.GetMessage()); });
 
-                    var sb = new StringBuilder();
-                    foreach (var data in compilationErrors)
-                    {
-                        sb.Append($"{data.Id}\nLine: {data.Location} - Properties: {string.Join(";", data.Properties.Values)}\n\n");
-                    }
-
-
-                    _pluginMetadata.Error = sb.ToString();
-                        Console.WriteLine(_pluginMetadata.Error);
-                    
-                    throw exception;
+                StringBuilder sb = new();
+                foreach (Diagnostic data in compilationErrors) {
+                    sb.Append($"{data.Id}\nLine: {data.Location} - Properties: {string.Join(";", data.Properties.Values)}\n\n");
                 }
+
+
+                _pluginMetadata.Error = sb.ToString();
+                Console.WriteLine(_pluginMetadata.Error);
+
+                throw exception;
             }
-            ms.Seek(0, SeekOrigin.Begin);
-
-            _generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(ms);
-
-            _proxyType = _generatedAssembly.GetType(_typeName);
-            return _proxyType;
         }
+        ms.Seek(0, SeekOrigin.Begin);
+
+        _generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(ms);
+
+        _proxyType = _generatedAssembly.GetType(_typeName);
+        return _proxyType;
     }
 }

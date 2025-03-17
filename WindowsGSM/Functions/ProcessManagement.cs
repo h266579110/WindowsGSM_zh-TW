@@ -17,11 +17,9 @@ namespace WindowsGSM.Functions
                 try
                 {
                     string query = $"SELECT CommandLine FROM Win32_Process WHERE ExecutablePath LIKE '%{path.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_").Replace("'", @"\'")}%'";
-                    using (ManagementObjectSearcher mos = new ManagementObjectSearcher(query))
-                    using (ManagementObjectCollection moc = mos.Get())
-                    {
-                        return (from mo in moc.Cast<ManagementObject>() select mo["CommandLine"]).First().ToString();
-                    }
+                    using ManagementObjectSearcher mos = new(query);
+                    using ManagementObjectCollection moc = mos.Get();
+                    return (from mo in moc.Cast<ManagementObject>() select mo["CommandLine"]).First().ToString();
                 }
                 catch (Exception e)
                 {

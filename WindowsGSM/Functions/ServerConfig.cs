@@ -108,10 +108,10 @@ namespace WindowsGSM.Functions
             {
                 foreach (string line in File.ReadLines(configpath))
                 {
-                    string[] keyvalue = line.Split(new[] {'='}, 2);
+                    string[] keyvalue = line.Split(['='], 2);
                     if (keyvalue.Length == 2)
                     {
-                        keyvalue[1] = keyvalue[1].Substring(1, keyvalue[1].Length - 2);
+                        keyvalue[1] = keyvalue[1][1..^1];
 
                         switch (keyvalue[0])
                         {
@@ -195,45 +195,43 @@ namespace WindowsGSM.Functions
             {
                 File.Create(configpath).Dispose();
 
-                using (TextWriter textwriter = new StreamWriter(configpath))
-                {
-                    textwriter.WriteLine($"{SettingName.ServerGame}=\"{ServerGame}\"");
-                    textwriter.WriteLine($"{SettingName.ServerName}=\"{ServerName}\"");
-                    textwriter.WriteLine($"{SettingName.ServerIP}=\"{ServerIP}\"");
-                    textwriter.WriteLine($"{SettingName.ServerPort}=\"{ServerPort}\"");
-                    textwriter.WriteLine($"{SettingName.ServerQueryPort}=\"{ServerQueryPort}\"");
-                    textwriter.WriteLine($"{SettingName.ServerMap}=\"{ServerMap}\"");
-                    textwriter.WriteLine($"{SettingName.ServerMaxPlayer}=\"{ServerMaxPlayer}\"");
-                    textwriter.WriteLine($"{SettingName.ServerGSLT}=\"{ServerGSLT}\"");
-                    textwriter.WriteLine($"{SettingName.ServerParam}=\"{ServerParam}\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.CPUPriority}=\"{CPUPriority}\"");
-                    textwriter.WriteLine($"{SettingName.CPUAffinity}=\"{CPUAffinity}\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.AutoRestart}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.AutoStart}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.AutoUpdate}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.UpdateOnStart}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.BackupOnStart}=\"0\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.DiscordAlert}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.DiscordMessage}=\"{DiscordMessage}\"");
-                    textwriter.WriteLine($"{SettingName.DiscordWebhook}=\"{DiscordWebhook}\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.RestartCrontab}=\"0\"");
-                    textwriter.WriteLine($"{SettingName.CrontabFormat}=\"{CrontabFormat}\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.EmbedConsole}=\"{(EmbedConsole ? "1" : "0")}\"");
-                    textwriter.WriteLine($"{SettingName.ShowConsole}=\"{(ShowConsole? "1" : "0")}\"");
-                    textwriter.WriteLine($"{SettingName.AutoScroll}=\"{(AutoScroll ? "1" : "0")}\"");
-                    textwriter.WriteLine(string.Empty);
-                    textwriter.WriteLine($"{SettingName.AutoStartAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.AutoRestartAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.AutoUpdateAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.RestartCrontabAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.CrashAlert}=\"1\"");
-                    textwriter.WriteLine($"{SettingName.AutoIpUpdateAlert}=\"0\"");
-                }
+                using StreamWriter textwriter = new(configpath);
+                textwriter.WriteLine($"{SettingName.ServerGame}=\"{ServerGame}\"");
+                textwriter.WriteLine($"{SettingName.ServerName}=\"{ServerName}\"");
+                textwriter.WriteLine($"{SettingName.ServerIP}=\"{ServerIP}\"");
+                textwriter.WriteLine($"{SettingName.ServerPort}=\"{ServerPort}\"");
+                textwriter.WriteLine($"{SettingName.ServerQueryPort}=\"{ServerQueryPort}\"");
+                textwriter.WriteLine($"{SettingName.ServerMap}=\"{ServerMap}\"");
+                textwriter.WriteLine($"{SettingName.ServerMaxPlayer}=\"{ServerMaxPlayer}\"");
+                textwriter.WriteLine($"{SettingName.ServerGSLT}=\"{ServerGSLT}\"");
+                textwriter.WriteLine($"{SettingName.ServerParam}=\"{ServerParam}\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.CPUPriority}=\"{CPUPriority}\"");
+                textwriter.WriteLine($"{SettingName.CPUAffinity}=\"{CPUAffinity}\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.AutoRestart}=\"0\"");
+                textwriter.WriteLine($"{SettingName.AutoStart}=\"0\"");
+                textwriter.WriteLine($"{SettingName.AutoUpdate}=\"0\"");
+                textwriter.WriteLine($"{SettingName.UpdateOnStart}=\"0\"");
+                textwriter.WriteLine($"{SettingName.BackupOnStart}=\"0\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.DiscordAlert}=\"0\"");
+                textwriter.WriteLine($"{SettingName.DiscordMessage}=\"{DiscordMessage}\"");
+                textwriter.WriteLine($"{SettingName.DiscordWebhook}=\"{DiscordWebhook}\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.RestartCrontab}=\"0\"");
+                textwriter.WriteLine($"{SettingName.CrontabFormat}=\"{CrontabFormat}\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.EmbedConsole}=\"{(EmbedConsole ? "1" : "0")}\"");
+                textwriter.WriteLine($"{SettingName.ShowConsole}=\"{(ShowConsole ? "1" : "0")}\"");
+                textwriter.WriteLine($"{SettingName.AutoScroll}=\"{(AutoScroll ? "1" : "0")}\"");
+                textwriter.WriteLine(string.Empty);
+                textwriter.WriteLine($"{SettingName.AutoStartAlert}=\"1\"");
+                textwriter.WriteLine($"{SettingName.AutoRestartAlert}=\"1\"");
+                textwriter.WriteLine($"{SettingName.AutoUpdateAlert}=\"1\"");
+                textwriter.WriteLine($"{SettingName.RestartCrontabAlert}=\"1\"");
+                textwriter.WriteLine($"{SettingName.CrashAlert}=\"1\"");
+                textwriter.WriteLine($"{SettingName.AutoIpUpdateAlert}=\"0\"");
 
                 return true;
             }
@@ -267,14 +265,12 @@ namespace WindowsGSM.Functions
             return false;
         }
 
-        public string GetIPAddress()
+        public static string GetIPAddress()
         {
-            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
-            {
-                socket.Connect("8.8.8.8", 65530);
-                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
-                return endPoint.Address.ToString();
-            }
+            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Dgram, 0);
+            socket.Connect("8.8.8.8", 65530);
+            IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+            return endPoint.Address.ToString();
         }
 
         public string GetAvailablePort(string defaultport, int increment)
@@ -303,11 +299,11 @@ namespace WindowsGSM.Functions
             return port.ToString();
         }
 
-        public string GetRCONPassword()
+        public static string GetRCONPassword()
         {
             string allowedChars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789!@$?_-";
             char[] chars = new char[12];
-            Random rd = new Random();
+            Random rd = new();
 
             for (int i = 0; i < 12; i++)
             {
@@ -329,12 +325,12 @@ namespace WindowsGSM.Functions
                 //Read all lines
                 foreach (string line in lines)
                 {
-                    string[] keyvalue = line.Split(new char[] { '=' }, 2);
+                    string[] keyvalue = line.Split(['='], 2);
                     if (keyvalue.Length == 2)
                     {
                         if (settingName == keyvalue[0])
                         {
-                            return keyvalue[1].Substring(1, keyvalue[1].Length - 2);
+                            return keyvalue[1][1..^1];
                         }
                     }
                 }
@@ -358,27 +354,20 @@ namespace WindowsGSM.Functions
                 File.Create(configFile).Dispose();
 
                 //Create the TextWriter
-                using (TextWriter textwriter = new StreamWriter(configFile))
-                {
-                    //Write lines
-                    foreach (string line in lines)
-                    {
-                        string[] keyvalue = line.Split(new[] { '=' }, 2);
-                        if (keyvalue.Length == 2 && settingName == keyvalue[0])
-                        {
-                            textwriter.WriteLine($"{settingName}=\"{data}\"");
-                            saved = true;
-                        }
-                        else
-                        {
-                            textwriter.WriteLine(line);
-                        }
-                    }
-
-                    if (!saved)
-                    {
+                using StreamWriter textwriter = new(configFile);
+                //Write lines
+                foreach (string line in lines) {
+                    string[] keyvalue = line.Split(['='], 2);
+                    if (keyvalue.Length == 2 && settingName == keyvalue[0]) {
                         textwriter.WriteLine($"{settingName}=\"{data}\"");
+                        saved = true;
+                    } else {
+                        textwriter.WriteLine(line);
                     }
+                }
+
+                if (!saved) {
+                    textwriter.WriteLine($"{settingName}=\"{data}\"");
                 }
             }
         }

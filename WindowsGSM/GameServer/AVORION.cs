@@ -4,12 +4,11 @@ using System.IO;
 
 namespace WindowsGSM.GameServer
 {
-    class AVORION
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class AVORION(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Avorion Dedicated Server";
         public string StartPath = @"bin\AvorionServer.exe";
@@ -25,12 +24,7 @@ namespace WindowsGSM.GameServer
 
         public string AppId = "565060";
 
-        public AVORION(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
-        public async void CreateServerCFG()
+        public static async void CreateServerCFG()
         {
             // No config file
         }
@@ -84,7 +78,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                Functions.ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -95,7 +89,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(async () =>
             {
@@ -116,7 +110,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId);
             Error = steamCMD.Error;
 
@@ -125,7 +119,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
             Error = error;
             return p;
         }
@@ -144,13 +138,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

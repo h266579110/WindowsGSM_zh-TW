@@ -59,7 +59,7 @@ namespace WindowsGSM.GameServer.Data
                 {
                     if (pluginList == null) { return null; }
 
-                    foreach (var plugin in pluginList)
+                    foreach (PluginMetadata plugin in pluginList)
                     {
                         if (plugin.IsLoaded && plugin.FullName == serverGame)
                         {

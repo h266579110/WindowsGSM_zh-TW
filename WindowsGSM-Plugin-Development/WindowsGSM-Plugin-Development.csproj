@@ -12,10 +12,10 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <Optimize>true</Optimize>
-    <NoWarn>1998</NoWarn>
+    <NoWarn>1998;SYSLIB1045</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <NoWarn>1998</NoWarn>
+    <NoWarn>1998;SYSLIB1045</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\WindowsGSM\WindowsGSM.csproj" />

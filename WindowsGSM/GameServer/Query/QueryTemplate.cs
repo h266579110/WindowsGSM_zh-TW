@@ -14,20 +14,12 @@ namespace WindowsGSM.GameServer.Query
         Task<string> GetPlayersAndMaxPlayers();
     }
 
-    public struct PlayerData
-    {
-        public int Id;
-        public string Name;
-        public long Score;
-        public TimeSpan? TimeConnected;
+    public struct PlayerData(int id, string name, long score = 0, TimeSpan? timeConnected = null) {
+        public int Id = id;
+        public string Name = name;
+        public long Score = score;
+        public TimeSpan? TimeConnected = timeConnected;
 
-        public PlayerData(int id, string name, long score = 0, TimeSpan? timeConnected = null)
-        {
-            Id = id;
-            Name = name;
-            Score = score;
-            TimeConnected = timeConnected;
-        }
         public override string ToString() 
         {
             return $"{Id}:{Name}, Score:{Score}, connected:{TimeConnected?.TotalMinutes}";

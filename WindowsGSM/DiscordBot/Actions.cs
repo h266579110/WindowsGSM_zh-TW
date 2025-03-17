@@ -12,18 +12,18 @@ namespace WindowsGSM.DiscordBot
     {
         public static async Task<Embed> GetServerList(string userId)
         {
-            var embed = new EmbedBuilder { Color = Color.Teal };
+            EmbedBuilder embed = new() { Color = Color.Teal };
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
 
-                var list = WindowsGSM.GetServerListByUserId(userId);
+                System.Collections.Generic.List<(string, string, string)> list = WindowsGSM.GetServerListByUserId(userId);
 
-                var ids = string.Empty;
-                var status = string.Empty;
-                var servers = string.Empty;
+                string ids = string.Empty;
+                string status = string.Empty;
+                string servers = string.Empty;
 
-                foreach (var(id, state, server) in list)
+                foreach ((string id, string state, string server) in list)
                 {
                     ids += $"`{id}`\n";
                     status += $"`{state}`\n";
@@ -42,47 +42,45 @@ namespace WindowsGSM.DiscordBot
         {
             return await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                 return WindowsGSM.GetServerName(serverId);
             });
         }
 
         public static async Task<string> GetServerPermissions(string userId)
         {
-            var serverIds = Configs.GetServerIdsByAdminId(userId);
+            System.Collections.Generic.List<string> serverIds = Configs.GetServerIdsByAdminId(userId);
             return serverIds.Contains("0")
                 ? "你擁有所有權限.\n指令: `check`, `list`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`"
                 : $"你在伺服器 (`{string.Join(",", [.. serverIds])}`) 擁有權限\n指令: `check`, `start`, `stop`, `restart`, `send`, `backup`, `update`, `stats`";
 
         }
 
-        public async Task StartServer(SocketInteraction interaction, string serverId)
+        public static async Task StartServer(SocketInteraction interaction, string serverId)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                var message = string.Empty;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                string message = string.Empty;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
-                    if (serverStatus == MainWindow.ServerStatus.Stopped)
-                    {
-                        var started = await WindowsGSM.StartServerById(serverId, interaction.User.Id.ToString(),
-                            interaction.User.Username);
-                        message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已啟動" : "啟動失敗")}";
-                    }
-                    else if (serverStatus == MainWindow.ServerStatus.Started)
-                    {
-                        message = $"伺服器 {serverName}(ID: {serverId}) 已經啟動";
-                    }
-                    else
-                    {
-                        message = $"伺服器 {serverName}(ID: {serverId}) 目前狀態為 {serverStatus}，無法啟動";
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
+                    switch (serverStatus) {
+                        case MainWindow.ServerStatus.Stopped:
+                            bool started = await WindowsGSM.StartServerById(serverId, interaction.User.Id.ToString(), interaction.User.Username);
+                            message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已啟動" : "啟動失敗")}";
+                            break;
+                        case MainWindow.ServerStatus.Started:
+                            message = $"伺服器 {serverName}(ID: {serverId}) 已經啟動";
+                            break;
+                        default:
+                            message = $"伺服器 {serverName}(ID: {serverId}) 目前狀態為 {serverStatus}，無法啟動";
+                            break;
                     }
 
                     await SendServerEmbed(interaction, message, Color.Green, serverId,
-                        WindowsGSM.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
+                        MainWindow.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
                 }
                 else
                 {
@@ -91,33 +89,31 @@ namespace WindowsGSM.DiscordBot
             });
         }
 
-        public async Task StopServer(SocketInteraction interaction, string serverId)
+        public static async Task StopServer(SocketInteraction interaction, string serverId)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                var message = string.Empty;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                string message = string.Empty;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
-                    if (serverStatus == MainWindow.ServerStatus.Started)
-                    {
-                        var started = await WindowsGSM.StopServerById(serverId, interaction.User.Id.ToString(),
-                            interaction.User.Username);
-                        message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已停止" : "停止失敗")}";
-                    }
-                    else if (serverStatus == MainWindow.ServerStatus.Stopped)
-                    {
-                        message = $"伺服器 {serverName}(ID: {serverId}) 已經停止";
-                    }
-                    else
-                    {
-                        message = $"伺服器 {serverName}(ID: {serverId}) 目前狀態為 {serverStatus}，無法停止";
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
+                    switch (serverStatus) {
+                        case MainWindow.ServerStatus.Started:
+                            bool started = await WindowsGSM.StopServerById(serverId, interaction.User.Id.ToString(), interaction.User.Username);
+                            message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已停止" : "停止失敗")}";
+                            break;
+                        case MainWindow.ServerStatus.Stopped:
+                            message = $"伺服器 {serverName}(ID: {serverId}) 已經停止";
+                            break;
+                        default:
+                            message = $"伺服器 {serverName}(ID: {serverId}) 目前狀態為 {serverStatus}，無法停止";
+                            break;
                     }
 
                     await SendServerEmbed(interaction, message, Color.Orange, serverId,
-                        WindowsGSM.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
+                        MainWindow.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
                 }
                 else
                 {
@@ -131,12 +127,12 @@ namespace WindowsGSM.DiscordBot
             await Application.Current.Dispatcher.Invoke(async () =>
             {
                 MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                var serverList = WindowsGSM.GetServerList();
-                foreach (var server in serverList)
+                System.Collections.Generic.List<(string, string, string)> serverList = WindowsGSM.GetServerList();
+                foreach ((string, string, string) server in serverList)
                 {
                     if (WindowsGSM.IsServerExist(server.Item1))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(server.Item1);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(server.Item1);
                         if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.StopServerById(server.Item1, interaction.User.Id.ToString(), interaction.User.Username);
@@ -155,19 +151,19 @@ namespace WindowsGSM.DiscordBot
             });
         }
 
-        public async Task RestartServer(SocketInteraction interaction, string serverId)
+        public static async Task RestartServer(SocketInteraction interaction, string serverId)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                var message = string.Empty;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                string message = string.Empty;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
                     if (serverStatus == MainWindow.ServerStatus.Started)
                     {
-                        var started = await WindowsGSM.RestartServerById(serverId, interaction.User.Id.ToString(),
+                        bool started = await WindowsGSM.RestartServerById(serverId, interaction.User.Id.ToString(),
                             interaction.User.Username);
                         message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已重啟" : "重啟失敗")}.";
                     }
@@ -177,7 +173,7 @@ namespace WindowsGSM.DiscordBot
                     }
 
                     await SendServerEmbed(interaction, message, Color.Blue, serverId,
-                        WindowsGSM.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
+                        MainWindow.GetServerStatus(serverId).ToString(), WindowsGSM.GetServerName(serverId));
                 }
                 else
                 {
@@ -188,16 +184,16 @@ namespace WindowsGSM.DiscordBot
 
         public static async Task SendServerCommand(SocketInteraction interaction, string serverId, string command, bool withResponce = false)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
                     if (IsStarted(serverStatus))
                     {
-                        var sent = await WindowsGSM.SendCommandById(serverId, command,
+                        string sent = await WindowsGSM.SendCommandById(serverId, command,
                             interaction.User.Id.ToString(), interaction.User.Username);
                         await interaction.FollowupAsync(
                             $"伺服器 {serverName}(ID: {serverId}) {(string.IsNullOrWhiteSpace(sent) ? "指令已送出" : "發送指令失敗")}. | `{command}`");
@@ -208,7 +204,7 @@ namespace WindowsGSM.DiscordBot
                             const int signsToSend = 1800;
                             for (int i = 0; i < sent.Length; i += signsToSend)
                             {
-                                var len = i + signsToSend < sent.Length ? signsToSend : sent.Length - i;
+                                int len = i + signsToSend < sent.Length ? signsToSend : sent.Length - i;
                                 await interaction.FollowupAsync($"```\n{sent.Substring(i, len)}\n```"); //read last log (2k is the limit for dc messages
                             }
                         }
@@ -230,18 +226,18 @@ namespace WindowsGSM.DiscordBot
 
         public static async Task BackupServer(SocketInteraction interaction, string serverId)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
                     if (serverStatus == MainWindow.ServerStatus.Stopped)
                     {
                         await interaction.FollowupAsync(
                             $"伺服器 {serverName}(ID: {serverId}) 開始備份 - 這可能需要一些時間");
-                        var backuped = await WindowsGSM.BackupServerById(serverId, interaction.User.Id.ToString(),
+                        bool backuped = await WindowsGSM.BackupServerById(serverId, interaction.User.Id.ToString(),
                             interaction.User.Username);
                         await interaction.FollowupAsync(
                             $"伺服器 {serverName}(ID: {serverId}) {(backuped ? "備份完成" : "備份失敗")}.");
@@ -265,18 +261,18 @@ namespace WindowsGSM.DiscordBot
 
         public static async Task UpdateServer(SocketInteraction interaction, string serverId)
         {
-            var serverName = await GetServerName(serverId);
+            string serverName = await GetServerName(serverId);
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                 if (WindowsGSM.IsServerExist(serverId))
                 {
-                    var serverStatus = WindowsGSM.GetServerStatus(serverId);
+                    MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
                     if (serverStatus == MainWindow.ServerStatus.Stopped)
                     {
                         await interaction.FollowupAsync(
                             $"伺服器 {serverName}(ID: {serverId}) 開始更新 - 這可能需要一些時間");
-                        var updated = await WindowsGSM.UpdateServerById(serverId, interaction.User.Id.ToString(),
+                        bool updated = await WindowsGSM.UpdateServerById(serverId, interaction.User.Id.ToString(),
                             interaction.User.Username);
                         await interaction.FollowupAsync(
                             $"伺服器 {serverName}(ID: {serverId}) {(updated ? "已更新" : "更新失敗")}.");
@@ -298,9 +294,9 @@ namespace WindowsGSM.DiscordBot
             });
         }
 
-        public async Task GetServerStats(SocketInteraction interaction)
+        public static async Task GetServerStats(SocketInteraction interaction)
         {
-            var system = new SystemMetrics();
+            SystemMetrics system = new();
             await Task.Run(() => system.GetCPUStaticInfo());
             await Task.Run(() => system.GetRAMStaticInfo());
             await Task.Run(() => system.GetDiskStaticInfo());
@@ -311,7 +307,7 @@ namespace WindowsGSM.DiscordBot
         private static async Task SendServerEmbed(SocketInteraction interaction, string message, Color color, string serverId, string serverStatus,
             string serverName)
         {
-            var embed = new EmbedBuilder { Color = color };
+            EmbedBuilder embed = new() { Color = color };
             embed.AddField("ID", serverId, inline: true);
             embed.AddField("狀態", serverStatus, inline: true);
             embed.AddField("伺服器名稱", serverName, inline: true);
@@ -322,10 +318,10 @@ namespace WindowsGSM.DiscordBot
         private static string GetProgressBar(double progress)
         {
             const int MAX_BLOCK = 23;
-            var display = $" {(int)progress}% ";
+            string display = $" {(int)progress}% ";
 
-            var startIndex = (MAX_BLOCK / 2) - (display.Length / 2);
-            var progressBar = string.Concat(Enumerable.Repeat("█", (int)(progress / 100 * MAX_BLOCK)))
+            int startIndex = (MAX_BLOCK / 2) - (display.Length / 2);
+            string progressBar = string.Concat(Enumerable.Repeat("█", (int)(progress / 100 * MAX_BLOCK)))
                 .PadRight(MAX_BLOCK).Remove(startIndex, display.Length).Insert(startIndex, display);
 
             return $"**`{progressBar}`**";
@@ -334,10 +330,10 @@ namespace WindowsGSM.DiscordBot
         private static string GetActivePlayersString(int activePlayers)
         {
             const int MAX_BLOCK = 23;
-            var display = $" {activePlayers} ";
+            string display = $" {activePlayers} ";
 
-            var startIndex = (MAX_BLOCK / 2) - (display.Length / 2);
-            var activePlayersString = string.Concat(Enumerable.Repeat(" ", MAX_BLOCK))
+            int startIndex = (MAX_BLOCK / 2) - (display.Length / 2);
+            string activePlayersString = string.Concat(Enumerable.Repeat(" ", MAX_BLOCK))
                 .Remove(startIndex, display.Length).Insert(startIndex, display);
 
             return $"**`{activePlayersString}`**";
@@ -347,7 +343,7 @@ namespace WindowsGSM.DiscordBot
             return Application.Current == null
                 ? (0, 0, 0)
                 : await Application.Current.Dispatcher.Invoke(async () => {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                    MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                 return (WindowsGSM.GetServerCount(), WindowsGSM.GetStartedServerCount(),
                     WindowsGSM.GetActivePlayers());
             });
@@ -355,22 +351,21 @@ namespace WindowsGSM.DiscordBot
 
         private static async Task<EmbedBuilder> GetMessageEmbed(SystemMetrics system)
         {
-            var embed = new EmbedBuilder
-            {
+            EmbedBuilder embed = new() {
                 Title = ":small_orange_diamond: 系統指標",
                 Description = $"主機名稱: {Environment.MachineName}",
                 Color = Color.Blue
             };
 
-            embed.AddField("CPU", GetProgressBar(await Task.Run(() => system.GetCPUUsage())), true);
-            var ramUsage = await Task.Run(() => system.GetRAMUsage());
+            embed.AddField("CPU", GetProgressBar(await Task.Run(() => SystemMetrics.GetCPUUsage())), true);
+            double ramUsage = await Task.Run(() => system.GetRAMUsage());
             embed.AddField("記憶體: " + SystemMetrics.GetMemoryRatioString(ramUsage, system.RAMTotalSize),
                 GetProgressBar(ramUsage), true);
-            var diskUsage = await Task.Run(() => system.GetDiskUsage());
+            double diskUsage = await Task.Run(() => system.GetDiskUsage());
             embed.AddField("硬碟: " + SystemMetrics.GetDiskRatioString(diskUsage, system.DiskTotalSize),
                 GetProgressBar(diskUsage), true);
 
-            var (serverCount, startedCount, activePlayers) = await GetGameServerDashBoardDetails();
+            (int serverCount, int startedCount, int activePlayers) = await GetGameServerDashBoardDetails();
             embed.AddField($"伺服器: {serverCount}/{MainWindow.MAX_SERVER}",
                 GetProgressBar(serverCount * 100 / MainWindow.MAX_SERVER), true);
             embed.AddField($"在線: {startedCount}/{serverCount}",

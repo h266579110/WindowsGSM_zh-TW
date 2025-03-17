@@ -29,15 +29,15 @@ namespace WindowsGSM.Functions
             Directory.CreateDirectory(ServerPath.GetPlugins());
         }
 
-        public async Task<List<PluginMetadata>> LoadPlugins(bool shouldAwait = true)
+        public static async Task<List<PluginMetadata>> LoadPlugins(bool shouldAwait = true)
         {
-            var plugins = new List<PluginMetadata>();
-            foreach (var pluginFolder in Directory.GetDirectories(ServerPath.GetPlugins(), "*.cs", SearchOption.TopDirectoryOnly).ToList())
+            List<PluginMetadata> plugins = [];
+            foreach (string pluginFolder in Directory.GetDirectories(ServerPath.GetPlugins(), "*.cs", SearchOption.TopDirectoryOnly).ToList())
             {
-                var pluginFile = Path.Combine(pluginFolder, Path.GetFileName(pluginFolder));
+                string pluginFile = Path.Combine(pluginFolder, Path.GetFileName(pluginFolder));
                 if (File.Exists(pluginFile))
                 {
-                    var plugin = await LoadPlugin(pluginFile, shouldAwait);
+                    PluginMetadata plugin = await LoadPlugin(pluginFile, shouldAwait);
                     if (plugin != null)
                     {
                         plugins.Add(plugin);
@@ -48,21 +48,20 @@ namespace WindowsGSM.Functions
             return plugins;
         }
 
-        public async Task<PluginMetadata> LoadPlugin(string path, bool shouldAwait = false)
+        public static async Task<PluginMetadata> LoadPlugin(string path, bool shouldAwait = false)
         {
-            var pluginMetadata = new PluginMetadata
-            {
+            PluginMetadata pluginMetadata = new() {
                 FileName = Path.GetFileName(path)
             };
 
-            var compiler = new RoslynCompiler($"WindowsGSM.Plugins.{Path.GetFileNameWithoutExtension(path)}", File.ReadAllText(path), new[] { typeof(Console), typeof(Console) }, pluginMetadata);
-            var type = compiler.Compile();
+            RoslynCompiler compiler = new($"WindowsGSM.Plugins.{Path.GetFileNameWithoutExtension(path)}", File.ReadAllText(path), [typeof(Console), typeof(Console)], pluginMetadata);
+            Type type = compiler.Compile();
 
 
             try
             {
                 pluginMetadata.Type = shouldAwait ? await Task.Run(() => type.Assembly.GetType($"WindowsGSM.Plugins.{Path.GetFileNameWithoutExtension(path)}")) : type.Assembly.GetType($"WindowsGSM.Plugins.{Path.GetFileNameWithoutExtension(path)}");
-                var plugin = GetPluginClass(pluginMetadata);
+                dynamic plugin = GetPluginClass(pluginMetadata);
                 pluginMetadata.FullName = $"{plugin.FullName} [{pluginMetadata.FileName}]";
                 pluginMetadata.Plugin = plugin.Plugin;
                 try
@@ -99,18 +98,14 @@ namespace WindowsGSM.Functions
 
         public static BitmapSource GetDefaultUserBitmapSource()
         {
-            using (var stream = System.Windows.Application.GetResourceStream(new Uri(DefaultUserImage)).Stream)
-            {
-                return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            }
+            using Stream stream = System.Windows.Application.GetResourceStream(new Uri(DefaultUserImage)).Stream;
+            return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         }
 
         public static BitmapSource GetDefaultPluginBitmapSource()
         {
-            using (var stream = System.Windows.Application.GetResourceStream(new Uri(DefaultPluginImage)).Stream)
-            {
-                return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            }
+            using Stream stream = System.Windows.Application.GetResourceStream(new Uri(DefaultPluginImage)).Stream;
+            return BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         }
 
         public static dynamic GetPluginClass(PluginMetadata plugin, ServerConfig serverConfig = null) => Activator.CreateInstance(plugin.Type, serverConfig);

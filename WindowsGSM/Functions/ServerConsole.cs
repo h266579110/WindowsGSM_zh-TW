@@ -25,8 +25,8 @@ namespace WindowsGSM.Functions
         private const int WM_GETTEXTLENGTH = 0x000E;
 
         private const int MAX_LINE = 500;
-        private readonly List<string> _consoleList = new List<string>();
-        private readonly List<string> _recorderConsoleList = new List<string>();
+        private readonly List<string> _consoleList = [];
+        private readonly List<string> _recorderConsoleList = [];
         private readonly string _serverId;
         private int _lineNumber = 0;
 
@@ -71,8 +71,8 @@ namespace WindowsGSM.Functions
                         if (!process.HasExited && process.ProcessName == "7DaysToDieServer")
                         {
                             SetForegroundWindow(mainWindow);
-                            var current = GetForegroundWindow();
-                            var wgsmWindow = Process.GetCurrentProcess().MainWindowHandle;
+                            nint current = GetForegroundWindow();
+                            nint wgsmWindow = Process.GetCurrentProcess().MainWindowHandle;
                             if (current != wgsmWindow)
                             {
                                 SendWaitToMainWindow("{TAB}");
@@ -99,7 +99,7 @@ namespace WindowsGSM.Functions
 
         public string Get()
         {
-            return string.Join(Environment.NewLine, _consoleList.ToArray());
+            return string.Join(Environment.NewLine, [.. _consoleList]);
         }
 
         public string GetPreviousCommand()
@@ -134,7 +134,7 @@ namespace WindowsGSM.Functions
             {
                 _lineNumber = _consoleList.Count + 1;
 
-                if (_consoleList.Count > 0 && text == _consoleList[_consoleList.Count - 1])
+                if (_consoleList.Count > 0 && text == _consoleList[^1])
                 {
                     return;
                 }
@@ -173,7 +173,7 @@ namespace WindowsGSM.Functions
             }
 
             // Send enter
-            PostMessage(hWnd, WM_KEYDOWN, (IntPtr)Keys.Enter, (IntPtr)(0 << 29 | 0));
+            PostMessage(hWnd, WM_KEYDOWN, (IntPtr)Keys.Enter, (IntPtr)((0 << 29) | 0));
         }
 
         public static void SetMainWindow(IntPtr hWnd)
@@ -210,7 +210,7 @@ namespace WindowsGSM.Functions
 
         public string StopRecorder()
         {
-            var text = string.Join(Environment.NewLine, _recorderConsoleList.ToArray());
+            string text = string.Join(Environment.NewLine, [.. _recorderConsoleList]);
             _recorderConsoleList.Clear();
             return text;
         }

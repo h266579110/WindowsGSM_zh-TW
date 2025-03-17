@@ -4,16 +4,9 @@ using NetFwTypeLib;
 
 namespace WindowsGSM
 {
-    class WindowsFirewall
-    {
-        private readonly string Name;
-        private readonly string Path;
-
-        public WindowsFirewall(string name, string path)
-        {
-            Name = name;
-            Path = path;
-        }
+    class WindowsFirewall(string name, string path) {
+        private readonly string Name = name;
+        private readonly string Path = path;
 
         public async Task<bool> IsRuleExist()
         {
@@ -46,8 +39,8 @@ namespace WindowsGSM
             {
                 try
                 {
-                    var netFwMgr = (INetFwMgr)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwMgr"));
-                    var app = (INetFwAuthorizedApplication)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwAuthorizedApplication"));
+                    INetFwMgr netFwMgr = (INetFwMgr)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwMgr"));
+                    INetFwAuthorizedApplication app = (INetFwAuthorizedApplication)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwAuthorizedApplication"));
                     app.Name = Name;
                     app.ProcessImageFileName = Path;
                     app.Enabled = true;

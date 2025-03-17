@@ -13,8 +13,7 @@ namespace WindowsGSM.Plugins
     public class AstroColony : SteamCMDAgent
     {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "WindowsGSM.AstroColony", // WindowsGSM.XXXX
             author = "raziel7893",
             description = "WindowsGSM plugin for supporting AstroColony Dedicated Server",
@@ -52,7 +51,7 @@ namespace WindowsGSM.Plugins
 
         public async void CreateServerCFG()
         {
-            Random rnd = new Random();
+            Random rnd = new();
 
             // Specify the file path
             string filePath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, "AstroColony\\Saved\\Config\\WindowsServer\\ServerSettings.ini");
@@ -81,15 +80,14 @@ namespace WindowsGSM.Plugins
                 return null;
             }
 
-            StringBuilder param = new StringBuilder();
+            StringBuilder param = new();
             param.Append($" -SteamServerName={serverData.ServerName}");
             param.Append($" -port={serverData.ServerPort}");
             param.Append($" -QueryPort={serverData.ServerQueryPort}");
             param.Append($" {serverData.ServerParam}");
 
             // Prepare Process
-            var p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     CreateNoWindow = false,
@@ -110,7 +108,7 @@ namespace WindowsGSM.Plugins
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 p.StartInfo.CreateNoWindow = true;
-                var serverConsole = new ServerConsole(serverData.ServerID);
+                ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
             }
@@ -134,7 +132,7 @@ namespace WindowsGSM.Plugins
         }
 
         // - Stop server function
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {

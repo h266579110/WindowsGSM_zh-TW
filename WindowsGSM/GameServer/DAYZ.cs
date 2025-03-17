@@ -18,12 +18,11 @@ namespace WindowsGSM.GameServer
     /// Therefore, traditional method is used.
     /// 
     /// </summary>
-    class DAYZ
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class DAYZ(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "DayZ Dedicated Server";
         public string StartPath = "DayZServer_x64.exe";
@@ -40,18 +39,13 @@ namespace WindowsGSM.GameServer
 
         public string AppId = "223350";
 
-        public DAYZ(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Download serverDZ.cfg
             string configPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "serverDZ.cfg");
             if (await Functions.Github.DownloadGameServerConfig(configPath, FullName))
             {
-                StringBuilder configText = new StringBuilder( File.ReadAllText(configPath));
+                StringBuilder configText = new( File.ReadAllText(configPath));
                 configText = configText.Replace("{{hostname}}", _serverData.ServerName);
                 configText = configText.Replace("{{maxplayers}}", Maxplayers);
                 configText.AppendLine("steamProtocolMaxDataSize = 4000; //should allow for more mods as this somehow affects how many parameters can be added via commandline "); 
@@ -70,7 +64,7 @@ namespace WindowsGSM.GameServer
             {
                 StartPath = "DZSALModServer.exe";
 
-                WindowsFirewall firewall = new WindowsFirewall(StartPath, dzsaPath);
+                WindowsFirewall firewall = new(StartPath, dzsaPath);
                 if (!await firewall.IsRuleExist())
                 {
                     await firewall.AddRule();
@@ -111,8 +105,7 @@ namespace WindowsGSM.GameServer
                 }
             }
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID),
@@ -128,7 +121,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -138,7 +131,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId, true, loginAnonymous);
             Error = steamCMD.Error;
 
@@ -147,7 +140,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
             Error = error;
             return p;
         }
@@ -166,13 +159,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

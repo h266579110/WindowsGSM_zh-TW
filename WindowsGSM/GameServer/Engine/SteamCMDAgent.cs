@@ -4,12 +4,10 @@ using System.IO;
 
 namespace WindowsGSM.GameServer.Engine
 {
-    public class SteamCMDAgent
-    {
-        public SteamCMDAgent(Functions.ServerConfig serverData) => this.serverData = serverData;
+    public class SteamCMDAgent(Functions.ServerConfig serverData) {
 
         // Standard variables
-        public Functions.ServerConfig serverData;
+        public Functions.ServerConfig serverData = serverData;
         public string Error { get; set; }
         public string Notice { get; set; }
 
@@ -19,7 +17,7 @@ namespace WindowsGSM.GameServer.Engine
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(serverData.ServerID, string.Empty, AppId, true, loginAnonymous);
             Error = steamCMD.Error;
 
@@ -28,7 +26,7 @@ namespace WindowsGSM.GameServer.Engine
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, AppId, validate, custom: custom, loginAnonymous: loginAnonymous);
             Error = error;
             await Task.Run(() => { p.WaitForExit(); });
             return p;
@@ -36,13 +34,13 @@ namespace WindowsGSM.GameServer.Engine
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
 

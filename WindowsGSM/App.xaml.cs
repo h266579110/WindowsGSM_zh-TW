@@ -10,19 +10,24 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace WindowsGSM
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
-    {
+    public partial class App : Application {
+        public static readonly HttpClient httpClient = new();
+
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Anything");
+            ServicePointManager.DefaultConnectionLimit = 10;
+
             bool forceStart = false, showCrashHint = false;
             foreach (string arg in e.Args)
             {
@@ -36,7 +41,7 @@ namespace WindowsGSM
             if (!forceStart)
             {
                 //LINQ query for windowsgsm old processes
-                var wgsm = (from p in Process.GetProcesses()
+                System.Collections.Generic.List<Process> wgsm = [.. (from p in Process.GetProcesses()
                             where ((Predicate<Process>)(p_ =>
                             {
                                 try
@@ -48,10 +53,10 @@ namespace WindowsGSM
                                     return false;
                                 }
                             }))(p)
-                            select p).ToList();
+                            select p)];
 
                 //Display the opened WindowsGSM
-                foreach (var process in wgsm)
+                foreach (Process process in wgsm)
                 {
                     if (process.Id != Process.GetCurrentProcess().Id)
                     {

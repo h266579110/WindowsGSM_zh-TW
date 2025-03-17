@@ -11,15 +11,14 @@ namespace WindowsGSM.Functions
         {
             return await Application.Current?.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
-                var settings = new MetroDialogSettings
-                {
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MetroDialogSettings settings = new() {
                     AffirmativeButtonText = affirmativeButtonText,
                     NegativeButtonText = negativeButtonText,
                     DefaultButtonFocus = MessageDialogResult.Affirmative
                 };
 
-                var result = await WindowsGSM.ShowMessageAsync(title, message, MessageDialogStyle.AffirmativeAndNegative, settings);
+                MessageDialogResult result = await WindowsGSM.ShowMessageAsync(title, message, MessageDialogStyle.AffirmativeAndNegative, settings);
                 return result == MessageDialogResult.Affirmative;
             });
         }

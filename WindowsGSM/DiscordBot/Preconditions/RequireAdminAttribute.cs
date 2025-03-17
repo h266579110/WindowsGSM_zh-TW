@@ -9,13 +9,10 @@ namespace WindowsGSM.DiscordBot.Preconditions
     {
         public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, ICommandInfo commandInfo, IServiceProvider services)
         {
-            var adminIds = Configs.GetBotAdminIds();
-            if (!adminIds.Contains(context.User.Id.ToString()))
-            {
-                return PreconditionResult.FromError("You don't have permission to use this command.");
-            }
-
-            return PreconditionResult.FromSuccess();
+            System.Collections.Generic.List<string> adminIds = Configs.GetBotAdminIds();
+            return !adminIds.Contains(context.User.Id.ToString())
+                ? PreconditionResult.FromError("You don't have permission to use this command.")
+                : PreconditionResult.FromSuccess();
         }
     }
 }

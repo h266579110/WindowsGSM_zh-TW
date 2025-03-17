@@ -5,12 +5,12 @@ using System.Runtime.CompilerServices;
 
 namespace WindowsGSM.GameServer
 {
-    class ARKSE : Engine.UnrealEngine
+    class ARKSE(Functions.ServerConfig serverData) : Engine.UnrealEngine
     {
-        private readonly Functions.ServerConfig _serverData;
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "ARK: Survival Evolved Dedicated Server";
         public string StartPath = @"ShooterGame\Binaries\Win64\ShooterGameServer.exe";
@@ -26,12 +26,7 @@ namespace WindowsGSM.GameServer
 
         public string AppId = "376030";
 
-        public ARKSE(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
-        public async void CreateServerCFG()
+        public static async void CreateServerCFG()
         {
             //No config file seems
         }
@@ -54,8 +49,7 @@ namespace WindowsGSM.GameServer
             param += string.IsNullOrWhiteSpace(_serverData.ServerQueryPort) ? string.Empty : $"?QueryPort={_serverData.ServerQueryPort}";
             param += $"{_serverData.ServerParam} -server -log";
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     FileName = shipExePath,
@@ -70,7 +64,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -80,7 +74,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId);
             Error = steamCMD.Error;
 
@@ -89,7 +83,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
             Error = error;
             return p;
         }
@@ -108,13 +102,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

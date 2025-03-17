@@ -11,11 +11,9 @@ using Newtonsoft.Json.Linq;
 
 namespace WindowsGSM.Plugins
 {
-    public class PaperMC
-    {
+    public class PaperMC(ServerConfig serverData) {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "WindowsGSM.PaperMC", // WindowsGSM.XXXX
             author = "BattlefieldDuck",
             description = "🧩 WindowsGSM plugin for supporting Minecraft: Paper Server",
@@ -23,16 +21,12 @@ namespace WindowsGSM.Plugins
             url = "https://github.com/BattlefieldDuck/WindowsGSM.PaperMC", // Github repository link (Best practice)
             color = "#ffffff" // Color Hex
         };
-
-
-        // - Standard Constructor and properties
-        public PaperMC(ServerConfig serverData) => _serverData = serverData;
-        private readonly ServerConfig _serverData;
+        private readonly ServerConfig _serverData = serverData;
         public string Error, Notice;
 
 
         // - Game server Fixed variables
-        public string StartPath => "paper.jar"; // Game server start path
+        public static string StartPath => "paper.jar"; // Game server start path
         public string FullName = "Minecraft: Paper Server"; // Game server FullName
         public bool AllowsEmbedConsole = true;  // Does this server support output redirect?
         public int PortIncrements = 1; // This tells WindowsGSM how many ports should skip after installation
@@ -50,13 +44,13 @@ namespace WindowsGSM.Plugins
         // - Create a default cfg for the game server after installation
         public async void CreateServerCFG()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.AppendLine($"motd={_serverData.ServerName}");
             sb.AppendLine($"server-port={_serverData.ServerPort}");
             sb.AppendLine("enable-query=true");
             sb.AppendLine($"query.port={_serverData.ServerQueryPort}");
             sb.AppendLine($"rcon.port={int.Parse(_serverData.ServerPort) + 10}");
-            sb.AppendLine($"rcon.password={_serverData.GetRCONPassword()}");
+            sb.AppendLine($"rcon.password={ServerConfig.GetRCONPassword()}");
             File.WriteAllText(ServerPath.GetServersServerFiles(_serverData.ServerID, "server.properties"), sb.ToString());
         }
 
@@ -65,7 +59,7 @@ namespace WindowsGSM.Plugins
         public async Task<Process> Start()
         {
             // Check Java exists
-            var javaPath = JavaHelper.FindJavaExecutableAbsolutePath();
+            string javaPath = JavaHelper.FindJavaExecutableAbsolutePath();
             if (javaPath.Length == 0)
             {
                 Error = "Java is not installed";
@@ -73,11 +67,10 @@ namespace WindowsGSM.Plugins
             }
 
             // Prepare start parameter
-            var param = new StringBuilder($"{_serverData.ServerParam} -jar {StartPath} nogui");
+            StringBuilder param = new($"{_serverData.ServerParam} -jar {StartPath} nogui");
 
             // Prepare Process
-            var p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = ServerPath.GetServersServerFiles(_serverData.ServerID),
@@ -96,7 +89,7 @@ namespace WindowsGSM.Plugins
                 p.StartInfo.RedirectStandardInput = true;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
-                var serverConsole = new ServerConsole(_serverData.ServerID);
+                ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
 
@@ -131,7 +124,7 @@ namespace WindowsGSM.Plugins
 
 
         // - Stop server function
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -153,7 +146,7 @@ namespace WindowsGSM.Plugins
         public async Task<Process> Install()
         {
             // EULA agreement
-            var agreedPrompt = await UI.CreateYesNoPromptV1("Agreement to the EULA", "By continuing you are indicating your agreement to the EULA.\n(https://account.mojang.com/documents/minecraft_eula)", "Agree", "Decline");
+            bool agreedPrompt = await UI.CreateYesNoPromptV1("Agreement to the EULA", "By continuing you are indicating your agreement to the EULA.\n(https://account.mojang.com/documents/minecraft_eula)", "Agree", "Decline");
             if (!agreedPrompt)
             {
                 Error = "Disagree to the EULA";
@@ -163,7 +156,7 @@ namespace WindowsGSM.Plugins
             // Install Java 21 if not installed
             if (!JavaHelper.IsJREInstalled())
             {
-                var taskResult = await JavaHelper.DownloadJREToServer(_serverData.ServerID);
+                JavaHelper.JREDownloadTaskResult taskResult = await JavaHelper.DownloadJREToServer(_serverData.ServerID);
                 if (!taskResult.installed)
                 {
                     Error = taskResult.error;
@@ -172,17 +165,19 @@ namespace WindowsGSM.Plugins
             }
 
             // Try getting the latest version and build
-            var build = (await GetRemoteBuild()).Split('/'); // [0]="1.16.1", [1]="133"
+            string[] build = (await GetRemoteBuild()).Split('/'); // [0]="1.16.1", [1]="133"
             if (build.Length < 2) { return null; }
 
             // Download the latest paper.jar to /serverfiles
             try
             {
-                using (var webClient = new WebClient())
-                {
-                    var downloadName = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}"))["downloads"]["application"]["name"].ToString(); // "paper-1.20.4-424.jar"
-                    await webClient.DownloadFileTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
-                }
+                //using WebClient webClient = new();
+                string downloadName = JObject.Parse(await App.httpClient.GetStringAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}"))["downloads"]["application"]["name"].ToString(); // "paper-1.20.4-424.jar"
+                Stream stream = await App.httpClient.GetStreamAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}");
+                using FileStream fileStream = File.Create(ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+                //await webClient.DownloadFileTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+                //string downloadName = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}"))["downloads"]["application"]["name"].ToString(); // "paper-1.20.4-424.jar"
+                //await webClient.DownloadFileTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
             }
             catch (Exception e)
             {
@@ -191,7 +186,7 @@ namespace WindowsGSM.Plugins
             }
 
             // Create eula.txt
-            var eulaFile = ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
+            string eulaFile = ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
             File.WriteAllText(eulaFile, "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).\neula=true");
 
             return null;
@@ -202,7 +197,7 @@ namespace WindowsGSM.Plugins
         public async Task<Process> Update()
         {
             // Delete the old paper.jar
-            var paperJar = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
+            string paperJar = ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath);
             if (File.Exists(paperJar))
             {
                 if (await Task.Run(() =>
@@ -224,17 +219,17 @@ namespace WindowsGSM.Plugins
             }
 
             // Try getting the latest version and build
-            var build = (await GetRemoteBuild()).Split('/'); // [0]="1.16.1", [1]="133"
+            string[] build = (await GetRemoteBuild()).Split('/'); // [0]="1.16.1", [1]="133"
             if (build.Length < 2) { return null; }
 
             // Download the latest paper.jar to /serverfiles
             try
             {
-                using (var webClient = new WebClient())
-                {
-                    var downloadName = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}"))["downloads"]["application"]["name"].ToString(); // "paper-1.20.4-424.jar"
-                    await webClient.DownloadFileTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
-                }
+                //using WebClient webClient = new();
+                Stream stream = await App.httpClient.GetStreamAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}");
+                using FileStream fileStream = File.Create(ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
+                //string downloadName = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}"))["downloads"]["application"]["name"].ToString(); // "paper-1.20.4-424.jar"
+                //await webClient.DownloadFileTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{build[0]}/builds/{build[1]}/downloads/{downloadName}", ServerPath.GetServersServerFiles(_serverData.ServerID, StartPath));
             }
             catch (Exception e)
             {
@@ -258,7 +253,7 @@ namespace WindowsGSM.Plugins
         public bool IsImportValid(string path)
         {
             // Check paper.jar exists
-            var exePath = Path.Combine(path, StartPath);
+            string exePath = Path.Combine(path, StartPath);
             Error = $"無效路徑! 找不到 {StartPath}";
             return File.Exists(exePath);
         }
@@ -269,18 +264,18 @@ namespace WindowsGSM.Plugins
         {
             // Get local version and build by version_history.json
             const string VERSION_JSON_FILE = "version_history.json";
-            var versionJsonFile = ServerPath.GetServersServerFiles(_serverData.ServerID, VERSION_JSON_FILE);
+            string versionJsonFile = ServerPath.GetServersServerFiles(_serverData.ServerID, VERSION_JSON_FILE);
             if (!File.Exists(versionJsonFile))
             {
                 Error = $"{VERSION_JSON_FILE} does not exist";
                 return string.Empty;
             }
 
-            var json = File.ReadAllText(versionJsonFile);
-            var text = JObject.Parse(json)["currentVersion"].ToString(); // "git-Paper-131 (MC: 1.16.1)"
-            var match = new Regex(@"git-Paper-(\d{1,}) \(MC: (.{1,})\)").Match(text);
-            var build = match.Groups[1].Value; // "131"
-            var version = match.Groups[2].Value; // "1.16.1"
+            string json = File.ReadAllText(versionJsonFile);
+            string text = JObject.Parse(json)["currentVersion"].ToString(); // "git-Paper-131 (MC: 1.16.1)"
+            Match match = new Regex(@"git-Paper-(\d{1,}) \(MC: (.{1,})\)").Match(text);
+            string build = match.Groups[1].Value; // "131"
+            string version = match.Groups[2].Value; // "1.16.1"
 
             return $"{version}/{build}";
         }
@@ -292,12 +287,12 @@ namespace WindowsGSM.Plugins
             // Get latest version and build at https://api.papermc.io
             try
             {
-                using (var webClient = new WebClient())
-                {
-                    var version = JObject.Parse(await webClient.DownloadStringTaskAsync("https://api.papermc.io/v2/projects/paper"))["versions"].Last.ToString(); // "1.16.1"
-                    var build = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{version}"))["builds"].Last.ToString(); // "133"
-                    return $"{version}/{build}";
-                }
+                //using WebClient webClient = new();
+                string version = JObject.Parse(await App.httpClient.GetStringAsync("https://api.papermc.io/v2/projects/paper"))["versions"].Last.ToString(); // "1.16.1"
+                string build = JObject.Parse(await App.httpClient.GetStringAsync($"https://api.papermc.io/v2/projects/paper/versions/{version}"))["builds"].Last.ToString(); // "133"
+                //string version = JObject.Parse(await webClient.DownloadStringTaskAsync("https://api.papermc.io/v2/projects/paper"))["versions"].Last.ToString(); // "1.16.1"
+                //string build = JObject.Parse(await webClient.DownloadStringTaskAsync($"https://api.papermc.io/v2/projects/paper/versions/{version}"))["builds"].Last.ToString(); // "133"
+                return $"{version}/{build}";
             }
             catch
             {

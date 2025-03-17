@@ -8,7 +8,7 @@ namespace WindowsGSM.DiscordBot.Modules
     [RequireAdmin]
     public class SlashCommandsModule : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly Actions _actions = new Actions();
+        private readonly Actions _actions = new();
 
         // [RequiredRole] TODO implement role based access
         [SlashCommand("list", "List all servers")]
@@ -28,7 +28,7 @@ namespace WindowsGSM.DiscordBot.Modules
         [SlashCommand("stats", "Get server stats")]
         public async Task StatsCommand()
         {
-            await _actions.GetServerStats(Context.Interaction);
+            await Actions.GetServerStats(Context.Interaction);
             Console.WriteLine($@"stats executed by {Context.User.Username}");
         }
 
@@ -36,7 +36,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task StartCommand([Summary("server"), Autocomplete] string serverId)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.StartServer(Context.Interaction, serverId);
+            await Actions.StartServer(Context.Interaction, serverId);
             Console.WriteLine($@"start server {serverId} executed by {Context.User.Username}");
         }
 
@@ -44,7 +44,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task StopCommand([Summary("server"), Autocomplete] string serverId)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.StopServer(Context.Interaction, serverId);
+            await Actions.StopServer(Context.Interaction, serverId);
             Console.WriteLine($@"stop server {serverId} executed by {Context.User.Username}");
         }
 
@@ -60,7 +60,7 @@ namespace WindowsGSM.DiscordBot.Modules
         public async Task RestartCommand([Summary("server"), Autocomplete] string serverId)
         {
             await Context.Interaction.DeferAsync();
-            await _actions.RestartServer(Context.Interaction, serverId);
+            await Actions.RestartServer(Context.Interaction, serverId);
             Console.WriteLine($@"restart server {serverId} executed by {Context.User.Username}");
         }
 

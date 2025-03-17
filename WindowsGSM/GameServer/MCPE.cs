@@ -7,12 +7,11 @@ using System.Text.RegularExpressions;
 
 namespace WindowsGSM.GameServer
 {
-    class MCPE
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class MCPE(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Minecraft: Pocket Edition Server (PocketMine-MP)";
         public string StartPath = @"bin\php\php.exe";
@@ -26,11 +25,6 @@ namespace WindowsGSM.GameServer
         public string Maxplayers = "20";
         public string Additional = string.Empty;
 
-        public MCPE(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Download server.properties
@@ -39,7 +33,7 @@ namespace WindowsGSM.GameServer
             {
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{hostname}}", _serverData.ServerName);
-                configText = configText.Replace("{{rcon_password}}", _serverData.GetRCONPassword());
+                configText = configText.Replace("{{rcon_password}}", Functions.ServerConfig.GetRCONPassword());
                 configText = configText.Replace("{{port}}", _serverData.ServerPort);
                 configText = configText.Replace("{{maxplayers}}", Maxplayers);
                 File.WriteAllText(configPath, configText);
@@ -105,7 +99,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                Functions.ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -116,7 +110,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -141,10 +135,10 @@ namespace WindowsGSM.GameServer
             string PHPzipPath = Path.Combine(serverFilesPath, fileName);
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync(installUrl, PHPzipPath);
-                }
+                Stream stream = await App.httpClient.GetStreamAsync(installUrl);
+                using FileStream fileStream = File.Create(PHPzipPath);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync(installUrl, PHPzipPath);
 
                 //Extract PHP-7.3-Windows-x64.zip and delete the zip
                 await Task.Run(() => ZipFile.ExtractToDirectory(PHPzipPath, serverFilesPath));
@@ -161,10 +155,10 @@ namespace WindowsGSM.GameServer
             installUrl = "https://jenkins.pmmp.io/job/PocketMine-MP/lastStableBuild/artifact/PocketMine-MP.phar";
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync(installUrl, Path.Combine(serverFilesPath, fileName));
-                }
+                Stream stream = await App.httpClient.GetStreamAsync(installUrl);
+                using FileStream fileStream = File.Create(Path.Combine(serverFilesPath, fileName));
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync(installUrl, Path.Combine(serverFilesPath, fileName));
             }
             catch
             {
@@ -197,10 +191,10 @@ namespace WindowsGSM.GameServer
             string installUrl = "https://jenkins.pmmp.io/job/PocketMine-MP/lastStableBuild/artifact/PocketMine-MP.phar";
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync(installUrl, PMMPPath);
-                } 
+                Stream stream = await App.httpClient.GetStreamAsync(installUrl);
+                using FileStream fileStream = File.Create(PMMPPath);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync(installUrl, PMMPPath);
             }
             catch
             {
@@ -245,7 +239,7 @@ namespace WindowsGSM.GameServer
                 {
                     if (s.Contains("const BUILD_NUMBER"))
                     {
-                        Regex regex = new Regex("\\d+");
+                        Regex regex = new("\\d+");
                         return regex.Match(s).Value;
                     }
                 }
@@ -259,17 +253,15 @@ namespace WindowsGSM.GameServer
         {
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string remoteUrl = "https://jenkins.pmmp.io/job/PocketMine-MP/lastStableBuild/artifact/build_info.json";
-                    string html = await webClient.DownloadStringTaskAsync(remoteUrl);
-                    Regex regex = new Regex("\"build_number\":\\D{0,}(.*?),");
-                    var matches = regex.Matches(html);
+                //using WebClient webClient = new();
+                string remoteUrl = "https://jenkins.pmmp.io/job/PocketMine-MP/lastStableBuild/artifact/build_info.json";
+                string html = await App.httpClient.GetStringAsync(remoteUrl);
+                //string html = await webClient.DownloadStringTaskAsync(remoteUrl);
+                Regex regex = new("\"build_number\":\\D{0,}(.*?),");
+                MatchCollection matches = regex.Matches(html);
 
-                    if (matches.Count == 1 && matches[0].Groups.Count == 2)
-                    {
-                        return matches[0].Groups[1].Value;
-                    }
+                if (matches.Count == 1 && matches[0].Groups.Count == 2) {
+                    return matches[0].Groups[1].Value;
                 }
             }
             catch

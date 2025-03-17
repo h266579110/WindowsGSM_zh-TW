@@ -10,8 +10,7 @@ namespace WindowsGSM.Plugins
     public class TF2_64bit :SteamCMDAgent
     {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "WindowsGSM.TF2_64bit",
             author = "Raziel7893",
             description = "WindowsGSM plugin for supporting TF2 using 64bit Dedicated Server",
@@ -30,10 +29,10 @@ namespace WindowsGSM.Plugins
         public string Maxplayers = "32";
 
         public string FullName = "Team Fortress 2 64bit Dedicated Server";
-        public string Defaultmap { get { return "cp_badlands"; } }
-        public string Game { get { return "tf"; } }
+        public static string Defaultmap { get { return "cp_badlands"; } }
+        public static string Game { get { return "tf"; } }
         public override string AppId { get { return "232250"; } }
-        public string Additional { get { return "-tickrate 64"; } }
+        public static string Additional { get { return "-tickrate 64"; } }
 
         public override string StartPath => "srcds_win64.exe";
 
@@ -57,7 +56,7 @@ namespace WindowsGSM.Plugins
                 Notice = $"server.cfg §ä¤£¨ì ({configPath})";
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"-console");
             sb.Append(string.IsNullOrWhiteSpace(Game) ? string.Empty : $" -game {Game}");
             sb.Append(string.IsNullOrWhiteSpace(serverData.ServerIP) ? string.Empty : $" -ip {serverData.ServerIP}");
@@ -101,7 +100,7 @@ namespace WindowsGSM.Plugins
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(serverData.ServerID);
+                ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -112,7 +111,7 @@ namespace WindowsGSM.Plugins
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -128,7 +127,7 @@ namespace WindowsGSM.Plugins
             {
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{hostname}}", serverData.ServerName);
-                configText = configText.Replace("{{rcon_password}}", serverData.GetRCONPassword());
+                configText = configText.Replace("{{rcon_password}}", ServerConfig.GetRCONPassword());
                 File.WriteAllText(configPath, configText);
             }
 

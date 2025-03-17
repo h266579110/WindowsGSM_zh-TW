@@ -16,56 +16,56 @@ namespace WindowsGSM.DiscordBot.Modules
         [AutocompleteCommand("server", "start")]
         public async Task StartAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         [AutocompleteCommand("server", "stop")]
         public async Task StopAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         [AutocompleteCommand("server", "restart")]
         public async Task RestartAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         [AutocompleteCommand("server", "send")]
         public async Task SendAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         [AutocompleteCommand("server", "update")]
         public async Task UpdateAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         [AutocompleteCommand("server", "backup")]
         public async Task BackupAutocomplete()
         {
-            var userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
             await GetAutocompleteServerList(userInput);
         }
 
         // Retrieve user's server list for autocomplete
         private async Task GetAutocompleteServerList(string input)
         {
-            var results = new List<AutocompleteResult>();
+            List<AutocompleteResult> results = [];
             await Application.Current.Dispatcher.Invoke(async () =>
             {
-                var WindowsGSM = (MainWindow)Application.Current.MainWindow;
+                MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
 
-                var servers = WindowsGSM.GetServerList(Context.User.Id.ToString());
+                List<(string, string, string)> servers = WindowsGSM.GetServerList(Context.User.Id.ToString());
 
-                foreach (var server in servers)
+                foreach ((string, string, string) server in servers)
                 {
                     results.Add(new AutocompleteResult($@"{server.Item3} [{server.Item2}]", server.Item1));
                 }

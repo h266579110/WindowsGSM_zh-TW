@@ -7,12 +7,11 @@ namespace WindowsGSM.GameServer
     /// <summary>
     /// Barotrauma's console not working on Embed console
     /// </summary>
-    class BT
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class BT(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Barotrauma Dedicated Server";
         public string StartPath = "DedicatedServer.exe";
@@ -27,11 +26,6 @@ namespace WindowsGSM.GameServer
         public string Additional = "";
 
         public string AppId = "1026340";
-
-        public BT(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
 
         public async void CreateServerCFG()
         {
@@ -65,8 +59,7 @@ namespace WindowsGSM.GameServer
 
             string param = _serverData.ServerParam;
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID),
@@ -82,7 +75,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -92,7 +85,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(_serverData.ServerID, string.Empty, AppId);
             Error = steamCMD.Error;
 
@@ -101,7 +94,7 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(_serverData.ServerID, AppId, validate, custom: custom);
             Error = error;
             return p;
         }
@@ -120,13 +113,13 @@ namespace WindowsGSM.GameServer
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(_serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

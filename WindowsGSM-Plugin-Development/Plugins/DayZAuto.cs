@@ -10,11 +10,10 @@ using System;
 namespace WindowsGSM.Plugins
 {
     //https://www.reddit.com/r/dayz/comments/afad51/automatically_update_and_sync_your_steam_workshop/
-    public class DayZAuto : SteamCMDAgent
+    public class DayZAuto(Functions.ServerConfig serverData) : SteamCMDAgent(serverData)
     {       
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "WindowsGSM.DayZAuto", // WindowsGSM.XXXX
             author = "raziel7893",
             description = "WindowsGSM plugin for supporting DayZ Dedicated Server with automatic ModUpdates",
@@ -26,7 +25,7 @@ namespace WindowsGSM.Plugins
         // - Settings properties for SteamCMD installer
         public override bool loginAnonymous => false;
         public override string AppId => "223350"; // Game server appId Steam
-        public string SteamGameId => "221100"; // Id of the Game itself. needed for workshop
+        public static string SteamGameId => "221100"; // Id of the Game itself. needed for workshop
 //        public string SteamGameId => "221380"; // DEBUGGGG
         public override string StartPath => "DayZServer_x64.exe"; // Game server start path
 
@@ -42,17 +41,13 @@ namespace WindowsGSM.Plugins
         public string Maxplayers = "60";
         public string Additional = "-config=serverDZ.cfg -doLogs -adminLog -netLog -profiles=profile";
 
-        public DayZAuto(Functions.ServerConfig serverData) : base(serverData)
-        {
-        }
-
         public async void CreateServerCFG()
         {
             //Download serverDZ.cfg
             string configPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, "serverDZ.cfg");
             if (await Functions.Github.DownloadGameServerConfig(configPath, FullName))
             {
-                StringBuilder configText = new StringBuilder(File.ReadAllText(configPath));
+                StringBuilder configText = new(File.ReadAllText(configPath));
                 configText = configText.Replace("{{hostname}}", serverData.ServerName);
                 configText = configText.Replace("{{maxplayers}}", Maxplayers);
                 configText.AppendLine("steamProtocolMaxDataSize = 4000;"); //should allow for more mods as this somehow affects how many parameters can be added via commandline 
@@ -95,8 +90,8 @@ namespace WindowsGSM.Plugins
             string modPath = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, "Modlist.txt");
             if (File.Exists(modPath))
             {
-                var lines = File.ReadAllLines(modPath);
-                var modParam = UpdateMods(new List<string>(lines));
+                string[] lines = File.ReadAllLines(modPath);
+                string modParam = UpdateMods([.. lines]);
 
                 if (!string.IsNullOrWhiteSpace(modParam))
                 {
@@ -104,8 +99,7 @@ namespace WindowsGSM.Plugins
                 }
             }
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = Functions.ServerPath.GetServersServerFiles(serverData.ServerID),
@@ -123,7 +117,7 @@ namespace WindowsGSM.Plugins
                 p.StartInfo.RedirectStandardInput = true;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
-                var serverConsole = new ServerConsole(serverData.ServerID);
+                ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
             }
@@ -145,9 +139,9 @@ namespace WindowsGSM.Plugins
                 return null; // return null if fail to start
             }
         }
-        private void DebugMessageAsync(string msg) =>
-            UI.CreateYesNoPromptV1("debug",msg,"yes", "yes");
-        public async Task Stop(Process p)
+        private static async void DebugMessageAsync(string msg) => await UI.CreateYesNoPromptV1("debug",msg,"yes", "yes");
+
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -157,12 +151,12 @@ namespace WindowsGSM.Plugins
 
         private string UpdateMods(List<string> modList)
         {
-            var modParam = "";
-            var mods = new Dictionary<string,string>();
+            string modParam = "";
+            Dictionary<string, string> mods = [];
             int index = 0;
             foreach (string line in modList)
             {
-                var splits = line.Split(',');
+                string[] splits = line.Split(',');
                 if (splits.Length != 2)
                     continue;
 
@@ -189,9 +183,9 @@ namespace WindowsGSM.Plugins
                 return;
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"{GetLogin()}");
-            foreach (var mod in mods)
+            foreach (KeyValuePair<string, string> mod in mods)
             {
                 if (!string.IsNullOrEmpty(mod.Key) && !string.IsNullOrEmpty(mod.Value))
                     sb.Append($" +workshop_download_item {SteamGameId} {mod.Key}");//221100
@@ -199,8 +193,7 @@ namespace WindowsGSM.Plugins
 
             sb.Append($" +quit");
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = _installPath,
@@ -226,31 +219,31 @@ namespace WindowsGSM.Plugins
         private void CopyMods(Dictionary<string, string> mods, string _installPath)
         {
             //go through all Plugins and create entry in keys
-            var workshopPath = _installPath + $"\\steamapps\\workshop\\content\\{SteamGameId}\\";
-            foreach (var mod in mods)
+            string workshopPath = _installPath + $"\\steamapps\\workshop\\content\\{SteamGameId}\\";
+            foreach (KeyValuePair<string, string> mod in mods)
             {
                 if (string.IsNullOrEmpty(mod.Key) || string.IsNullOrEmpty(mod.Value))
                 {
-                    Error = Error + $"Modlist entry invalid: key: {mod.Key}, Value:{mod.Value}";
+                    Error += $"Modlist entry invalid: key: {mod.Key}, Value:{mod.Value}";
                     continue;
                 }
 
-                var src = workshopPath + mod.Key;
+                string src = workshopPath + mod.Key;
                 if (!Directory.Exists(src))
                 {
-                    Error = Error + $"Mod was not downloaded key: {mod.Key}, Value:{mod.Value}  path: {src}";
+                    Error += $"Mod was not downloaded key: {mod.Key}, Value:{mod.Value}  path: {src}";
                     continue;
                 }
-              
-                var destFolder = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, mod.Value);
+
+                string destFolder = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, mod.Value);
 
                 CopyDirectory(src, destFolder, true);
 
                 //now search for *.bikey files
-                var files = Directory.EnumerateFiles(destFolder, "*.bikey", SearchOption.AllDirectories);
-                foreach (var file in files)
+                IEnumerable<string> files = Directory.EnumerateFiles(destFolder, "*.bikey", SearchOption.AllDirectories);
+                foreach (string file in files)
                 {
-                    var dest = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, "keys", Path.GetFileName(file));
+                    string dest = Functions.ServerPath.GetServersServerFiles(serverData.ServerID, "keys", Path.GetFileName(file));
                     File.Copy(file, dest);
                 }
             }
@@ -274,7 +267,7 @@ namespace WindowsGSM.Plugins
                         continue;
                     }
 
-                    string[] keyvalue = line.Split(new char[] { '=' }, 2);
+                    string[] keyvalue = line.Split(['='], 2);
                     if (keyvalue[0] == "steamUser")
                     {
                         steamUser = keyvalue[1].Trim('\"');
@@ -298,7 +291,7 @@ namespace WindowsGSM.Plugins
         static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
         {
             // Get information about the source directory
-            var dir = new DirectoryInfo(sourceDir);
+            DirectoryInfo dir = new(sourceDir);
 
             // Check if the source directory exists
             if (!dir.Exists)

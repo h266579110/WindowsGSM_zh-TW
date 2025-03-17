@@ -19,7 +19,7 @@ namespace WindowsGSM.Functions
         {
             try
             {
-                var mbo = new ManagementObjectSearcher("SELECT Name, NumberOfCores FROM Win32_Processor").Get();
+                ManagementObjectCollection mbo = new ManagementObjectSearcher("SELECT Name, NumberOfCores FROM Win32_Processor").Get();
                 CPUType = mbo.Cast<ManagementBaseObject>().Select(c => c["Name"].ToString()).FirstOrDefault();
                 CPUCoreCount = mbo.Cast<ManagementBaseObject>().Sum(x => int.Parse(x["NumberOfCores"].ToString()));
             }
@@ -47,13 +47,13 @@ namespace WindowsGSM.Functions
 
         public void GetDiskStaticInfo(string disk = null)
         {
-            disk = disk ?? Path.GetPathRoot(Process.GetCurrentProcess().MainModule.FileName);
+            disk ??= Path.GetPathRoot(Process.GetCurrentProcess().MainModule.FileName);
             DiskName = disk.TrimEnd('\\');
             DiskType = DriveInfo.GetDrives().Where(x => (x.Name == disk) && x.IsReady).Select(x => x.DriveFormat).FirstOrDefault();
             DiskTotalSize = DriveInfo.GetDrives().Where(x => (x.Name == disk) && x.IsReady).Select(x => x.TotalSize).FirstOrDefault();
         }
 
-        public double GetCPUUsage()
+        public static double GetCPUUsage()
         {
             try
             {
@@ -72,7 +72,7 @@ namespace WindowsGSM.Functions
             {
                 const string RAM_FREE_MEMORY = "FreePhysicalMemory";
                 double freeMemory = new ManagementObjectSearcher($"Select {RAM_FREE_MEMORY} from Win32_OperatingSystem").Get().Cast<ManagementObject>().Select(m => double.Parse(m[RAM_FREE_MEMORY].ToString())).FirstOrDefault();
-                return (RAMTotalSize == 0) ? 0 : (1 - freeMemory / RAMTotalSize) * 100;
+                return (RAMTotalSize == 0) ? 0 : (1 - (freeMemory / RAMTotalSize)) * 100;
             }
             catch
             {
@@ -82,9 +82,9 @@ namespace WindowsGSM.Functions
 
         public double GetDiskUsage(string disk = null)
         {
-            disk = disk ?? Path.GetPathRoot(Process.GetCurrentProcess().MainModule.FileName);
+            disk ??= Path.GetPathRoot(Process.GetCurrentProcess().MainModule.FileName);
             double freeSpace = DriveInfo.GetDrives().Where(x => (x.Name == disk) && x.IsReady).Select(x => x.AvailableFreeSpace).FirstOrDefault();
-            return (DiskTotalSize == 0) ? 0 : (1 - freeSpace / DiskTotalSize) * 100;
+            return (DiskTotalSize == 0) ? 0 : (1 - (freeSpace / DiskTotalSize)) * 100;
         }
 
         public static string GetMemoryRatioString(double percent, double totalMemory)
@@ -111,39 +111,38 @@ namespace WindowsGSM.Functions
             return $"{string.Format("{0:0.00}", totalDisk * percent / 100)}/{string.Format("{0:0.00}", totalDisk)} {(count == 1 ? "KB" : count == 2 ? "MB" : count == 3 ? "GB" : "TB")} ";
         }
 
-        private string GetMemoryType()
+        private static string GetMemoryType()
         {
             const string RAM_MEMORY_TYPE = "MemoryType";
-            var mbo = new ManagementObjectSearcher($"SELECT {RAM_MEMORY_TYPE} FROM Win32_PhysicalMemory").Get();
-            switch (mbo.Cast<ManagementBaseObject>().Select(c => int.Parse(c[RAM_MEMORY_TYPE].ToString())).FirstOrDefault())
-            {
-                case 1: return "Other";
-                case 2: return "DRAM";
-                case 3: return "Synchronous DRAM";
-                case 4: return "Cache DRAM";
-                case 5: return "EDO";
-                case 6: return "EDRAM";
-                case 7: return "VRAM";
-                case 8: return "SRAM";
-                case 9: return "RAM";
-                case 10: return "ROM";
-                case 11: return "Flash";
-                case 12: return "EEPROM";
-                case 13: return "FEPROM";
-                case 14: return "EPROM";
-                case 15: return "CDRAM";
-                case 16: return "3DRAM";
-                case 17: return "SDRAM";
-                case 18: return "SGRAM";
-                case 19: return "RDRAM";
-                case 20: return "DDR";
-                case 21: return "DDR2";
-                case 22: return "DDR2 FB-DIMM";
-                case 23: return "Undefined 23";
-                case 24: return "DDR3";
-                case 25: return "Undefined 25";
-                default: return "Unknown";
-            }
+            ManagementObjectCollection mbo = new ManagementObjectSearcher($"SELECT {RAM_MEMORY_TYPE} FROM Win32_PhysicalMemory").Get();
+            return mbo.Cast<ManagementBaseObject>().Select(c => int.Parse(c[RAM_MEMORY_TYPE].ToString())).FirstOrDefault() switch {
+                1 => "Other",
+                2 => "DRAM",
+                3 => "Synchronous DRAM",
+                4 => "Cache DRAM",
+                5 => "EDO",
+                6 => "EDRAM",
+                7 => "VRAM",
+                8 => "SRAM",
+                9 => "RAM",
+                10 => "ROM",
+                11 => "Flash",
+                12 => "EEPROM",
+                13 => "FEPROM",
+                14 => "EPROM",
+                15 => "CDRAM",
+                16 => "3DRAM",
+                17 => "SDRAM",
+                18 => "SGRAM",
+                19 => "RDRAM",
+                20 => "DDR",
+                21 => "DDR2",
+                22 => "DDR2 FB-DIMM",
+                23 => "Undefined 23",
+                24 => "DDR3",
+                25 => "Undefined 25",
+                _ => "Unknown",
+            };
         }
     }
 }

@@ -5,12 +5,11 @@ using System.Text;
 
 namespace WindowsGSM.GameServer.Engine
 {
-    public class GoldSource
-    {
-        public Functions.ServerConfig serverData;
+    public class GoldSource(Functions.ServerConfig serverData) {
+        public Functions.ServerConfig serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public string StartPath = "hlds.exe";
         public bool AllowsEmbedConsole = true;
@@ -25,8 +24,6 @@ namespace WindowsGSM.GameServer.Engine
 
         public virtual string Game { get { return string.Empty; } }
         public virtual string AppId { get { return string.Empty; } }
-
-        public GoldSource(Functions.ServerConfig serverData) => this.serverData = serverData;
 
         public async Task<Process> Start()
         {
@@ -43,7 +40,7 @@ namespace WindowsGSM.GameServer.Engine
                 Notice = $"server.cfg 找不到 ({configPath})";
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"-console -game {Game}");
             sb.Append(string.IsNullOrWhiteSpace(serverData.ServerIP) ? string.Empty : $" -ip {serverData.ServerIP}");
             sb.Append(string.IsNullOrWhiteSpace(serverData.ServerPort) ? string.Empty : $" -port {serverData.ServerPort}");
@@ -87,7 +84,7 @@ namespace WindowsGSM.GameServer.Engine
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(serverData.ServerID);
+                Functions.ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -98,7 +95,7 @@ namespace WindowsGSM.GameServer.Engine
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -114,7 +111,7 @@ namespace WindowsGSM.GameServer.Engine
             {
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{hostname}}", serverData.ServerName);
-                configText = configText.Replace("{{rcon_password}}", serverData.GetRCONPassword());
+                configText = configText.Replace("{{rcon_password}}", Functions.ServerConfig.GetRCONPassword());
                 File.WriteAllText(configPath, configText);
             }
 
@@ -125,7 +122,7 @@ namespace WindowsGSM.GameServer.Engine
 
         public async Task<Process> Install()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             Process p = await steamCMD.Install(serverData.ServerID, Game, "90", true);
             Error = steamCMD.Error;
 
@@ -134,7 +131,7 @@ namespace WindowsGSM.GameServer.Engine
 
         public async Task<Process> Update(bool validate = false, string custom = null)
         {
-            var (p, error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, "90", validate, custom: custom, modName: Game);
+            (Process p, string error) = await Installer.SteamCMD.UpdateEx(serverData.ServerID, "90", validate, custom: custom, modName: Game);
             Error = error;
             return p;
         }
@@ -153,13 +150,13 @@ namespace WindowsGSM.GameServer.Engine
 
         public string GetLocalBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return steamCMD.GetLocalBuild(serverData.ServerID, AppId);
         }
 
         public async Task<string> GetRemoteBuild()
         {
-            var steamCMD = new Installer.SteamCMD();
+            Installer.SteamCMD steamCMD = new();
             return await steamCMD.GetRemoteBuild(AppId);
         }
     }

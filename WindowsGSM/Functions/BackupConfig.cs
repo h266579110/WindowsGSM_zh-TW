@@ -44,7 +44,7 @@ namespace WindowsGSM.Functions
             string configPath = ServerPath.GetServersConfigs(_serverId, "BackupConfig.cfg");
             foreach (string line in File.ReadLines(configPath))
             {
-                string[] keyvalue = line.Split(new[] { '=' }, 2);
+                string[] keyvalue = line.Split(['='], 2);
                 if (keyvalue.Length == 2)
                 {
                     keyvalue[1] = keyvalue[1].Trim('\"');

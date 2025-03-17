@@ -170,7 +170,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Stopped)
                         {
                             bool started = await WindowsGSM.StartServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
@@ -185,7 +185,7 @@ namespace WindowsGSM.DiscordBot {
                             await message.Channel.SendMessageAsync($"伺服器 (ID: {args[1]}) 目前狀態為 {serverStatus}，無法啟動");
                         }
 
-                        await SendServerEmbed(message, Color.Green, args[1], WindowsGSM.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
+                        await SendServerEmbed(message, Color.Green, args[1], MainWindow.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
                     }
                     else
                     {
@@ -209,7 +209,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.StopServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
@@ -224,7 +224,7 @@ namespace WindowsGSM.DiscordBot {
                             await message.Channel.SendMessageAsync($"伺服器 (ID: {args[1]}) 目前狀態為 {serverStatus}，無法停止");
                         }
 
-                        await SendServerEmbed(message, Color.Orange, args[1], WindowsGSM.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
+                        await SendServerEmbed(message, Color.Orange, args[1], MainWindow.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
                     }
                     else
                     {
@@ -248,7 +248,7 @@ namespace WindowsGSM.DiscordBot {
                 {
                     if (WindowsGSM.IsServerExist(server.Item1))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(server.Item1);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(server.Item1);
                         if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.StopServerById(server.Item1, message.Author.Id.ToString(), message.Author.Username);
@@ -277,7 +277,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             bool started = await WindowsGSM.RestartServerById(args[1], message.Author.Id.ToString(), message.Author.Username);
@@ -288,7 +288,7 @@ namespace WindowsGSM.DiscordBot {
                             await message.Channel.SendMessageAsync($"伺服器 (ID: {args[1]}) 目前狀態為 {serverStatus}，無法重啟");
                         }
 
-                        await SendServerEmbed(message, Color.Blue, args[1], WindowsGSM.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
+                        await SendServerEmbed(message, Color.Blue, args[1], MainWindow.GetServerStatus(args[1]).ToString(), WindowsGSM.GetServerName(args[1]));
                     }
                     else
                     {
@@ -312,7 +312,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             string sendCommand = command[(args[1].Length + 6)..].Trim();
@@ -361,7 +361,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Stopped)
                         {
                             await message.Channel.SendMessageAsync($"伺服器 (ID: {args[1]}) 開始備份 - 這可能需要一些時間");
@@ -399,7 +399,7 @@ namespace WindowsGSM.DiscordBot {
                     MainWindow WindowsGSM = (MainWindow)Application.Current.MainWindow;
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Stopped)
                         {
                             await message.Channel.SendMessageAsync($"伺服器 (ID: {args[1]}) 開始更新 - 這可能需要一些時間");
@@ -449,7 +449,7 @@ namespace WindowsGSM.DiscordBot {
                     if (WindowsGSM.IsServerExist(args[1]))
                     {
                         Console.WriteLine("executing gameserverstats_ server exists");
-                        MainWindow.ServerStatus serverStatus = WindowsGSM.GetServerStatus(args[1]);
+                        MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
                         if (serverStatus == MainWindow.ServerStatus.Started)
                         {
                             ServerTable serverTable = WindowsGSM.GetServerTableById(args[1]);
@@ -558,7 +558,7 @@ namespace WindowsGSM.DiscordBot {
                 Color = Color.Blue
             };
 
-            embed.AddField("CPU", GetProgressBar(await Task.Run(() => system.GetCPUUsage())), true);
+            embed.AddField("CPU", GetProgressBar(await Task.Run(() => SystemMetrics.GetCPUUsage())), true);
             double ramUsage = await Task.Run(() => system.GetRAMUsage());
             embed.AddField("記憶體: " + SystemMetrics.GetMemoryRatioString(ramUsage, system.RAMTotalSize), GetProgressBar(ramUsage), true);
             double diskUsage = await Task.Run(() => system.GetDiskUsage());

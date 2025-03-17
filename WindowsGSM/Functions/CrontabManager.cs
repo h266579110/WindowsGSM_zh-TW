@@ -45,7 +45,7 @@ namespace WindowsGSM.Functions
         private const string ConfigFolder = "Crontab";
         private List<CrontabEntry> crontabSchedules;
         private bool runLoop = true;
-        private List<Task> runningBackgroundTasks = new List<Task>();
+        private readonly List<Task> runningBackgroundTasks = [];
 
         public CrontabManager(MainWindow window, ServerTable server, Process process)
         {
@@ -59,15 +59,15 @@ namespace WindowsGSM.Functions
 
         private void CreateConfigDirectory()
         {
-            var configFolder = ServerPath.GetServersConfigs(Server.ID, "Crontab");
+            string configFolder = ServerPath.GetServersConfigs(Server.ID, "Crontab");
             if (!Directory.Exists(configFolder))
             {
-                var directory = Directory.CreateDirectory(configFolder);
+                DirectoryInfo directory = Directory.CreateDirectory(configFolder);
                 //set readOnly
-                var admin = new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.BuiltinAdministratorsSid, null);
-                var directorySecurity = directory.GetAccessControl();
+                System.Security.Principal.SecurityIdentifier admin = new(System.Security.Principal.WellKnownSidType.BuiltinAdministratorsSid, null);
+                DirectorySecurity directorySecurity = directory.GetAccessControl();
 
-                var administratorRule = new FileSystemAccessRule(admin, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow);
+                FileSystemAccessRule administratorRule = new(admin, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow);
 
                 directorySecurity.SetAccessRuleProtection(true, false);
                 directorySecurity.AddAccessRule(administratorRule);
@@ -84,8 +84,8 @@ namespace WindowsGSM.Functions
             //add gui entry
             crontabSchedules.AddEntry(GetServerMetadata(int.Parse(Server.ID)).CrontabFormat, CrontabType.Restart);
 
-            var files = Directory.GetFiles(configFolder, "*.csv", SearchOption.AllDirectories);
-            foreach (var file in files)
+            string[] files = Directory.GetFiles(configFolder, "*.csv", SearchOption.AllDirectories);
+            foreach (string file in files)
             {
                 string[] lines = File.ReadAllLines(file);
 
@@ -95,7 +95,7 @@ namespace WindowsGSM.Functions
                     {
                         continue;
                     }
-                    var tokens = line.Split(';');
+                    string[] tokens = line.Split(';');
                     if (tokens.Length == 2 && tokens[1].ToLower().Trim() == "restart")
                     {
                         crontabSchedules.AddEntry(tokens[0], CrontabType.Restart);
@@ -162,7 +162,7 @@ namespace WindowsGSM.Functions
                 await Task.Delay(1000);
                 //execxute in a async task that runs simply in the background, as we don't want to miss any other scedules. could cause thread buildup, if something stupid is executed.
 
-                foreach (var next in nextOccurrences)
+                foreach ((int index, DateTime? nextOccurrence) next in nextOccurrences)
                 {
                     //Return if crontab expression is invalid 
                     if (next.nextOccurrence == null) continue;
@@ -174,7 +174,7 @@ namespace WindowsGSM.Functions
                     }
                 }
             }
-            foreach (var task in runningBackgroundTasks)
+            foreach (Task task in runningBackgroundTasks)
             {
                 //explicitly kill all running background tasks
                 task.Dispose();
@@ -243,7 +243,7 @@ namespace WindowsGSM.Functions
                     sb.AppendLine(p.StandardOutput.ReadLine());
                     // do something with line
                 }
-                var file = ServerPath.GetLogs($"Server_{Server.ID}_{command}_execLog.log");
+                string file = ServerPath.GetLogs($"Server_{Server.ID}_{command}_execLog.log");
                 File.AppendAllText(file, sb.ToString());
 #if DEBUG
                 Console.WriteLine($"Executed Exec, consoleData: {sb}");
@@ -279,7 +279,7 @@ namespace WindowsGSM.Functions
                     await Window.GameServer_Update(Server, " | 啟動時更新");
                 }
 
-                var gameServer = await Window.Server_BeginStart(Server);
+                dynamic gameServer = await Window.Server_BeginStart(Server);
                 if (gameServer == null) { return; }
 
                 _serverMetadata[int.Parse(Server.ID)].ServerStatus = ServerStatus.Started;
@@ -292,8 +292,8 @@ namespace WindowsGSM.Functions
 
                 if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).RestartCrontabAlert)
                 {
-                    var webhook = new DiscordWebhook(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType);
-                    await webhook.Send(Server.ID, Server.Game, "已重啟 | 例行性重啟", Server.Name, GetPublicIP(), Server.Port);
+                    DiscordWebhook webhook = new(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType);
+                    await webhook.Send(Server.ID, Server.Game, "已重啟 | 例行性重啟", Server.Name, await GetPublicIP(), Server.Port);
                     Window._latestWebhookSend = ServerStatus.Restarted;
                 }
             }
@@ -320,7 +320,7 @@ namespace WindowsGSM.Functions
         }
         public static bool AddEntry(this List<CrontabEntry> entries, string expression, CrontabType type, string command = "", string payload = "")
         {
-            var scedule = CrontabSchedule.TryParse(expression);
+            CrontabSchedule scedule = CrontabSchedule.TryParse(expression);
 
             if (scedule != null)
             {

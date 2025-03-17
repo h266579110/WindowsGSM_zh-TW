@@ -13,8 +13,7 @@ namespace WindowsGSM.Plugins
     public class Hurtworld : SteamCMDAgent
     {
         // - Plugin Details
-        public Plugin Plugin = new Plugin
-        {
+        public Plugin Plugin = new() {
             name = "WindowsGSM.Hurtworld", // WindowsGSM.XXXX
             author = "raziel7893",
             description = "WindowsGSM plugin for supporting Hurtworld Dedicated Server",
@@ -53,7 +52,7 @@ namespace WindowsGSM.Plugins
 
 
         // - Create a default cfg for the game server after installation
-        public async void CreateServerCFG()
+        public static async void CreateServerCFG()
         {
         }
 
@@ -68,12 +67,11 @@ namespace WindowsGSM.Plugins
             }
 
             //Try gather a password from the gui
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append($"{serverData.ServerParam}");
 
             // Prepare Process
-            var p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     CreateNoWindow = false,
@@ -94,7 +92,7 @@ namespace WindowsGSM.Plugins
                 p.StartInfo.RedirectStandardError = true;
                 p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 p.StartInfo.CreateNoWindow = true;
-                var serverConsole = new ServerConsole(serverData.ServerID);
+                ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
             }
@@ -118,7 +116,7 @@ namespace WindowsGSM.Plugins
         }
 
         // - Stop server function
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {

@@ -19,12 +19,26 @@ namespace WindowsGSM.Functions
             public bool installed;
             public string error;
 
-            public bool Equals(JREDownloadTaskResult other)
+            public readonly bool Equals(JREDownloadTaskResult other)
             {
                 return installed == other.installed && error == other.error;
             }
-        };
 
+            public override readonly bool Equals(object obj) {
+                return obj is JREDownloadTaskResult result && Equals(result);
+            }
+
+            public override int GetHashCode() {
+                throw new NotImplementedException();
+            }
+            public static bool operator ==(JREDownloadTaskResult left, JREDownloadTaskResult right) {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(JREDownloadTaskResult left, JREDownloadTaskResult right) {
+                return !(left == right);
+            }
+        }
         public static string FindJavaExecutableAbsolutePath()
         {
             return FindNewestJavaExecutableAbsolutePath();
@@ -38,30 +52,29 @@ namespace WindowsGSM.Functions
             string jrePath = Path.Combine(serverFilesPath, JreInstallFileName);
             JREDownloadTaskResult result;
             result.installed = true;
-            result.error = String.Empty;
+            result.error = string.Empty;
 
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    //Run jre-8u231-windows-i586-iftw.exe to install Java
-                    await webClient.DownloadFileTaskAsync(JreDownloadLink, jrePath);
-                    string installPath = Functions.ServerPath.GetServersServerFiles(serverID);
-                    ProcessStartInfo psi = new ProcessStartInfo(jrePath);
-                    psi.WorkingDirectory = installPath;
-                    psi.Arguments = $"INSTALL_SILENT=Enable INSTALLDIR=\"{JreAbsoluteInstallPath}\"";
-                    Process p = new Process
-                    {
-                        StartInfo = psi,
-                        EnableRaisingEvents = true
-                    };
-                    p.Start();
+            try {
+                //Run jre-8u231-windows-i586-iftw.exe to install Java
+                Stream stream = await App.httpClient.GetStreamAsync(JreDownloadLink);
+                using FileStream fileStream = File.Create(jrePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync(JreDownloadLink, jrePath);
+                string installPath = Functions.ServerPath.GetServersServerFiles(serverID);
+                ProcessStartInfo psi = new(jrePath) {
+                    WorkingDirectory = installPath,
+                    Arguments = $"INSTALL_SILENT=Enable INSTALLDIR=\"{JreAbsoluteInstallPath}\""
+                };
+                Process p = new() {
+                    StartInfo = psi,
+                    EnableRaisingEvents = true
+                };
+                p.Start();
 
-                    //wait until the java.exe can be found in the newly installed jre folder
-                    while (FindJavaExecutableAbsolutePathInJavaRuntimeDirectory(JreAbsoluteInstallPath).Length == 0)
-                    {
-                        await Task.Delay(100);
-                    }
+                //wait until the java.exe can be found in the newly installed jre folder
+                while (FindJavaExecutableAbsolutePathInJavaRuntimeDirectory(JreAbsoluteInstallPath).Length == 0) {
+                    await Task.Delay(100);
                 }
             }
             catch
@@ -122,12 +135,13 @@ namespace WindowsGSM.Functions
             Process p;
             try
             {
-                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe");
-                psi.RedirectStandardOutput = true;
-                psi.RedirectStandardError = true;
-                psi.UseShellExecute = false;
-                psi.CreateNoWindow = true;
-                psi.Arguments = string.Join(" ", "/c", javaExecutablePath, "-version");
+                ProcessStartInfo psi = new("cmd.exe") {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    Arguments = string.Join(" ", "/c", javaExecutablePath, "-version")
+                };
                 p = Process.Start(psi);
                 p.WaitForExit();
             }
@@ -159,20 +173,14 @@ namespace WindowsGSM.Functions
                 return string.Empty;
             }
 
-            string javaVersion = output.Substring(javaVersionStart, javaVersionEnd - javaVersionStart);
+            string javaVersion = output[javaVersionStart..javaVersionEnd];
             return javaVersion;
         }
 
-        private class JavaExecutable : IComparable<JavaExecutable>
+        private class JavaExecutable(string javaExecutableAbsolutePath, string javaVersionString) : IComparable<JavaExecutable>
         {
-            public readonly string javaExecutableAbsolutePath;
-            public readonly string javaVersionString;
-
-            public JavaExecutable(string javaExecutableAbsolutePath, string javaVersionString)
-            {
-                this.javaExecutableAbsolutePath = javaExecutableAbsolutePath;
-                this.javaVersionString = javaVersionString;
-            }
+            public readonly string javaExecutableAbsolutePath = javaExecutableAbsolutePath;
+            public readonly string javaVersionString = javaVersionString;
 
             public int CompareTo(JavaExecutable other)
             {
@@ -181,12 +189,8 @@ namespace WindowsGSM.Functions
 
             public override bool Equals(object obj)
             {
-                var other = obj as JavaExecutable;
-                if (ReferenceEquals(other, null))
-                {
-                    return false;
-                }
-                return CompareTo(other) == 0;
+                JavaExecutable other = obj as JavaExecutable;
+                return other is not null && CompareTo(other) == 0;
             }
 
             public override int GetHashCode()
@@ -234,19 +238,19 @@ namespace WindowsGSM.Functions
                 return string.Empty;
             }
 
-            List<string> javaRuntimeDirectories = new List<string>(Directory.EnumerateDirectories(javaDirectoryAbsolutePath));
+            List<string> javaRuntimeDirectories = [.. Directory.EnumerateDirectories(javaDirectoryAbsolutePath)];
             if (javaRuntimeDirectories.Count == 0)
             {
                 return string.Empty;
             }
 
-            List<JavaExecutable> javaExecutables = new List<JavaExecutable>();
+            List<JavaExecutable> javaExecutables = [];
             foreach (string javaRuntimePath in javaRuntimeDirectories)
             {
                 string javaExecutableAbsolutePath = FindJavaExecutableAbsolutePathInJavaRuntimeDirectory(javaRuntimePath);
                 if (javaExecutableAbsolutePath.Length > 0)
                 {
-                    JavaExecutable javaExecutable = new JavaExecutable(javaExecutableAbsolutePath, QueryJavaVersion(javaExecutableAbsolutePath));
+                    JavaExecutable javaExecutable = new(javaExecutableAbsolutePath, QueryJavaVersion(javaExecutableAbsolutePath));
                     if (javaExecutable.javaVersionString.Length == 0)
                     {
                         continue;
@@ -271,10 +275,7 @@ namespace WindowsGSM.Functions
         private static string FindNewestJavaExecutableAbsolutePath()
         {
             string javaDirectoryAbsolutePath = Environment.GetEnvironmentVariable("JAVA_HOME");
-            if (javaDirectoryAbsolutePath == null)
-            {
-                javaDirectoryAbsolutePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Java");
-            }
+            javaDirectoryAbsolutePath ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Java");
             string javaRuntimeAbsolutePath = FindJavaExecutableAbsolutePath(javaDirectoryAbsolutePath);
 
             if (javaRuntimeAbsolutePath.Length > 0)

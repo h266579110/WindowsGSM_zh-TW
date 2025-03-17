@@ -11,10 +11,10 @@ namespace WindowsGSM.GameServer.Query
 {
     public class UT3 : QueryTemplate
     {
-        private static readonly byte[] UT3_MAGIC = { 0xFE, 0xFD };
-        private static readonly byte[] UT3_HANDSHAKE = { 0x09 };
-        private static readonly byte[] UT3_INFO = { 0x00 };
-        private static readonly byte[] UT3_SESSIONID = { 0x10, 0x20, 0x30, 0x40 };
+        private static readonly byte[] UT3_MAGIC = [0xFE, 0xFD];
+        private static readonly byte[] UT3_HANDSHAKE = [0x09];
+        private static readonly byte[] UT3_INFO = [0x00];
+        private static readonly byte[] UT3_SESSIONID = [0x10, 0x20, 0x30, 0x40];
 
         private IPEndPoint _IPEndPoint;
         private int _timeout;
@@ -40,32 +40,25 @@ namespace WindowsGSM.GameServer.Query
                 {
                     byte[] requestData;
                     byte[] responseData;
-                    using (UdpClientHandler udpHandler = new UdpClientHandler(_IPEndPoint))
+                    using (UdpClientHandler udpHandler = new(_IPEndPoint))
                     {
                         // Send UT3_HANDSHAKE request
-                        requestData = UT3_MAGIC
-                            .Concat(UT3_HANDSHAKE)
-                            .Concat(UT3_SESSIONID)
-                            .ToArray();
+                        requestData = [.. UT3_MAGIC
+, .. UT3_HANDSHAKE, .. UT3_SESSIONID];
 
                         // Receive response
-                        byte[] token = GetToken(udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout).ToArray());
+                        byte[] token = GetToken([.. udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout)]);
 
                         // Send UT3_INFO request
-                        requestData = UT3_MAGIC
-                            .Concat(UT3_INFO)
-                            .Concat(UT3_SESSIONID)
-                            .Concat(token)
-                            .ToArray();
+                        requestData = [.. UT3_MAGIC
+, .. UT3_INFO, .. UT3_SESSIONID, .. token];
 
                         // Receive response
-                        responseData = udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout)
-                            .Skip(5)
-                            .ToArray();
+                        responseData = [.. udpHandler.GetResponse(requestData, requestData.Length, _timeout, _timeout).Skip(5)];
                     }
 
-                    var keys = new Dictionary<string, string>();
-                    using (var br = new BinaryReader(new MemoryStream(responseData), Encoding.UTF8))
+                    Dictionary<string, string> keys = [];
+                    using (BinaryReader br = new(new MemoryStream(responseData), Encoding.UTF8))
                     {
                         keys["MOTD"] = ReadString(br);
                         keys["GameType"] = ReadString(br);
@@ -85,25 +78,25 @@ namespace WindowsGSM.GameServer.Query
             });
         }
 
-        private byte[] GetToken(byte[] response)
+        private static byte[] GetToken(byte[] response)
         {
-            int challenge = int.Parse(Encoding.ASCII.GetString(response.Skip(5).ToArray()));
-            return new[] { (byte)(challenge >> 24 & 0xFF), (byte)(challenge >> 16 & 0xFF), (byte)(challenge >> 8 & 0xFF), (byte)(challenge >> 0 & 0xFF) };
+            int challenge = int.Parse(Encoding.ASCII.GetString([.. response.Skip(5)]));
+            return [(byte)((challenge >> 24) & 0xFF), (byte)((challenge >> 16) & 0xFF), (byte)((challenge >> 8) & 0xFF), (byte)((challenge >> 0) & 0xFF)];
         }
 
-        private string ReadString(BinaryReader br)
+        private static string ReadString(BinaryReader br)
         {
-            byte[] bytes = new byte[0];
+            byte[] bytes = [];
 
             // Get all bytes until 0x00
             do
             {
-                bytes = bytes.Concat(new[] { br.ReadByte() }).ToArray();
+                bytes = [.. bytes, .. new[] { br.ReadByte() }];
             }
-            while (bytes[bytes.Length - 1] != 0x00);
+            while (bytes[^1] != 0x00);
 
             // Return bytes in UTF8 except the last byte because it is 0x00
-            return Encoding.UTF8.GetString(bytes.Take(bytes.Length - 1).ToArray());
+            return Encoding.UTF8.GetString([.. bytes.Take(bytes.Length - 1)]);
         }
 
         public async Task<string> GetPlayersAndMaxPlayers()

@@ -7,15 +7,15 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using WindowsGSM.Functions;
+using System.Windows.Shapes;
 
 namespace WindowsGSM.GameServer
 {
-    class MC
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class MC(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Minecraft: Java Edition Server";
         public string StartPath = string.Empty;
@@ -29,11 +29,6 @@ namespace WindowsGSM.GameServer
         public string Maxplayers = "20";
         public string Additional = "-Xmx1024M -Xms1024M";
 
-        public MC(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Create server.properties
@@ -46,7 +41,7 @@ namespace WindowsGSM.GameServer
                 configText = configText.Replace("{{rconPort}}", (int.Parse(_serverData.ServerPort) + 10).ToString());
                 configText = configText.Replace("{{serverIP}}", _serverData.ServerIP);
                 configText = configText.Replace("{{defaultmap}}", Defaultmap);
-                configText = configText.Replace("{{rcon_password}}", _serverData.GetRCONPassword());
+                configText = configText.Replace("{{rcon_password}}", ServerConfig.GetRCONPassword());
                 configText = configText.Replace("{{serverName}}", _serverData.ServerName);
                 File.WriteAllText(configPath, configText);
             }
@@ -63,20 +58,20 @@ namespace WindowsGSM.GameServer
 
             string workingDir = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID);
 
-            string serverJarPath = Path.Combine(workingDir, "server.jar");
+            string serverJarPath = System.IO.Path.Combine(workingDir, "server.jar");
             if (!File.Exists(serverJarPath))
             {
                 Error = $"server.jar 找不到 ({serverJarPath})";
                 return null;
             }
 
-            string configPath = Path.Combine(workingDir, "server.properties");
+            string configPath = System.IO.Path.Combine(workingDir, "server.properties");
             if (!File.Exists(configPath))
             {
                 Notice = $"server.properties 找不到 ({configPath}). 建立全新檔案.";
             }
 
-            WindowsFirewall firewall = new WindowsFirewall("java.exe", javaPath);
+            WindowsFirewall firewall = new("java.exe", javaPath);
             if (!await firewall.IsRuleExist())
             {
                 await firewall.AddRule();
@@ -117,7 +112,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -128,7 +123,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -174,47 +169,44 @@ namespace WindowsGSM.GameServer
 
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    const string manifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-                    string versionJson = await webClient.DownloadStringTaskAsync(manifestUrl);
-                    string latesetVersion = JObject.Parse(versionJson)["latest"]["release"].ToString();
-                    var versionObject = JObject.Parse(versionJson)["versions"];
-                    string packageUrl = null;
+                //using WebClient webClient = new();
+                const string manifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+                string versionJson = await App.httpClient.GetStringAsync(manifestUrl);
+                //string versionJson = await webClient.DownloadStringTaskAsync(manifestUrl);
+                string latesetVersion = JObject.Parse(versionJson)["latest"]["release"].ToString();
+                JToken versionObject = JObject.Parse(versionJson)["versions"];
+                string packageUrl = null;
 
-                    foreach (var obj in versionObject)
-                    {
-                        if (obj["id"].ToString() == latesetVersion)
-                        {
-                            packageUrl = obj["url"].ToString();
-                            break;
-                        }
-                    }
-
-                    if (packageUrl == null)
-                    {
-                        Error = $"Fail to fetch packageUrl from {manifestUrl}";
-                        return null;
-                    }
-
-                    //packageUrl example: https://launchermeta.mojang.com/v1/packages/6876d19c096de56d1aa2cf434ec6b0e66e0aba00/1.15.json
-                    var packageJson = await webClient.DownloadStringTaskAsync(packageUrl);
-
-                    //serverJarUrl example: https://launcher.mojang.com/v1/objects/e9f105b3c5c7e85c7b445249a93362a22f62442d/server.jar
-                    string serverJarUrl = JObject.Parse(packageJson)["downloads"]["server"]["url"].ToString();
-                    await webClient.DownloadFileTaskAsync(serverJarUrl, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
-
-                    //Create eula.txt
-                    string eulaPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
-                    File.Create(eulaPath).Dispose();
-
-                    using (TextWriter textwriter = new StreamWriter(eulaPath))
-                    {
-                        textwriter.WriteLine("#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
-                        textwriter.WriteLine("#Generated by WindowsGSM.exe");
-                        textwriter.WriteLine("eula=true");
+                foreach (JToken obj in versionObject) {
+                    if (obj["id"].ToString() == latesetVersion) {
+                        packageUrl = obj["url"].ToString();
+                        break;
                     }
                 }
+
+                if (packageUrl == null) {
+                    Error = $"Fail to fetch packageUrl from {manifestUrl}";
+                    return null;
+                }
+
+                //packageUrl example: https://launchermeta.mojang.com/v1/packages/6876d19c096de56d1aa2cf434ec6b0e66e0aba00/1.15.json
+                string packageJson = await App.httpClient.GetStringAsync(packageUrl);
+                //string packageJson = await webClient.DownloadStringTaskAsync(packageUrl);
+
+                //serverJarUrl example: https://launcher.mojang.com/v1/objects/e9f105b3c5c7e85c7b445249a93362a22f62442d/server.jar
+                string serverJarUrl = JObject.Parse(packageJson)["downloads"]["server"]["url"].ToString();
+                Stream stream = await App.httpClient.GetStreamAsync(serverJarUrl);
+                using FileStream fileStream = File.Create(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
+                //await webClient.DownloadFileTaskAsync(serverJarUrl, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
+
+                //Create eula.txt
+                string eulaPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
+                File.Create(eulaPath).Dispose();
+
+                using StreamWriter textwriter = new(eulaPath);
+                textwriter.WriteLine("#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
+                textwriter.WriteLine("#Generated by WindowsGSM.exe");
+                textwriter.WriteLine("eula=true");
             }
             catch
             {
@@ -254,47 +246,44 @@ namespace WindowsGSM.GameServer
 
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    const string manifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-                    string versionJson = webClient.DownloadString(manifestUrl);
-                    string latesetVersion = JObject.Parse(versionJson)["latest"]["release"].ToString();
-                    var versionObject = JObject.Parse(versionJson)["versions"];
-                    string packageUrl = null;
+                //using WebClient webClient = new();
+                const string manifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+                string versionJson = await App.httpClient.GetStringAsync(manifestUrl);
+                //string versionJson = webClient.DownloadString(manifestUrl);
+                string latesetVersion = JObject.Parse(versionJson)["latest"]["release"].ToString();
+                JToken versionObject = JObject.Parse(versionJson)["versions"];
+                string packageUrl = null;
 
-                    foreach (var obj in versionObject)
-                    {
-                        if (obj["id"].ToString() == latesetVersion)
-                        {
-                            packageUrl = obj["url"].ToString();
-                            break;
-                        }
-                    }
-
-                    if (packageUrl == null)
-                    {
-                        Error = $"Fail to fetch packageUrl from {manifestUrl}";
-                        return null;
-                    }
-
-                    //packageUrl example: https://launchermeta.mojang.com/v1/packages/6876d19c096de56d1aa2cf434ec6b0e66e0aba00/1.15.json
-                    var packageJson = webClient.DownloadString(packageUrl);
-
-                    //serverJarUrl example: https://launcher.mojang.com/v1/objects/e9f105b3c5c7e85c7b445249a93362a22f62442d/server.jar
-                    string serverJarUrl = JObject.Parse(packageJson)["downloads"]["server"]["url"].ToString();
-                    await webClient.DownloadFileTaskAsync(serverJarUrl, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
-
-                    //Create eula.txt
-                    string eulaPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
-                    File.Create(eulaPath).Dispose();
-
-                    using (TextWriter textwriter = new StreamWriter(eulaPath))
-                    {
-                        textwriter.WriteLine("#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
-                        textwriter.WriteLine("#Generated by WindowsGSM.exe");
-                        textwriter.WriteLine("eula=true");
+                foreach (JToken obj in versionObject) {
+                    if (obj["id"].ToString() == latesetVersion) {
+                        packageUrl = obj["url"].ToString();
+                        break;
                     }
                 }
+
+                if (packageUrl == null) {
+                    Error = $"Fail to fetch packageUrl from {manifestUrl}";
+                    return null;
+                }
+
+                //packageUrl example: https://launchermeta.mojang.com/v1/packages/6876d19c096de56d1aa2cf434ec6b0e66e0aba00/1.15.json
+                string packageJson = await App.httpClient.GetStringAsync(packageUrl);
+                //string packageJson = webClient.DownloadString(packageUrl);
+
+                //serverJarUrl example: https://launcher.mojang.com/v1/objects/e9f105b3c5c7e85c7b445249a93362a22f62442d/server.jar
+                string serverJarUrl = JObject.Parse(packageJson)["downloads"]["server"]["url"].ToString();
+                Stream stream = await App.httpClient.GetStreamAsync(serverJarUrl);
+                using FileStream fileStream = File.Create(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
+                //await webClient.DownloadFileTaskAsync(serverJarUrl, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server.jar"));
+
+                //Create eula.txt
+                string eulaPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "eula.txt");
+                File.Create(eulaPath).Dispose();
+
+                using StreamWriter textwriter = new(eulaPath);
+                textwriter.WriteLine("#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
+                textwriter.WriteLine("#Generated by WindowsGSM.exe");
+                textwriter.WriteLine("eula=true");
             }
             catch
             {
@@ -316,7 +305,7 @@ namespace WindowsGSM.GameServer
         public bool IsImportValid(string path)
         {
             string jarFile = "server.jar";
-            string jarPath = Path.Combine(path, jarFile);
+            string jarPath = System.IO.Path.Combine(path, jarFile);
 
             Error = $"無效路徑! 找不到 {jarFile}";
             return File.Exists(jarPath);
@@ -333,15 +322,15 @@ namespace WindowsGSM.GameServer
                 return string.Empty;
             }
 
-            FileStream fileStream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            StreamReader streamReader = new StreamReader(fileStream);
+            FileStream fileStream = new(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            StreamReader streamReader = new(fileStream);
 
             while (!streamReader.EndOfStream)
             {
                 string line = streamReader.ReadLine();
                 if (line.Contains("] [Server thread/INFO]: Starting minecraft server version"))
                 {
-                    Regex regex = new Regex("\\d+\\.\\d+\\.\\d+");
+                    Regex regex = new("\\d+\\.\\d+\\.\\d+");
                     return regex.Match(line).Value;
                 }
             }
@@ -357,18 +346,16 @@ namespace WindowsGSM.GameServer
         {
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string remoteUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-                    string html = await webClient.DownloadStringTaskAsync(remoteUrl);
+                //using WebClient webClient = new();
+                string remoteUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+                string html = await App.httpClient.GetStringAsync(remoteUrl);
+                //string html = await webClient.DownloadStringTaskAsync(remoteUrl);
 
-                    Regex regex = new Regex("\"latest\":.{\"release\":.\"(.*?)\"");
-                    var matches = regex.Matches(html);
+                Regex regex = new("\"latest\":.{\"release\":.\"(.*?)\"");
+                MatchCollection matches = regex.Matches(html);
 
-                    if (matches.Count == 1 && matches[0].Groups.Count == 2)
-                    {
-                        return matches[0].Groups[1].Value;
-                    }
+                if (matches.Count == 1 && matches[0].Groups.Count == 2) {
+                    return matches[0].Groups[1].Value;
                 }
             }
             catch

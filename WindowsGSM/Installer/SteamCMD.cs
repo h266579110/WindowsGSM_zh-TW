@@ -30,16 +30,16 @@ namespace WindowsGSM.Installer
         private static async Task<bool> Download()
         {
             Directory.CreateDirectory(_installPath);
-            var exePath = Path.Combine(_installPath, _exeFile);
+            string exePath = Path.Combine(_installPath, _exeFile);
             if (File.Exists(exePath)) { return true; }
 
             try
             {
-                var zipPath = Path.Combine(_installPath, "steamcmd.zip");
-                using (var webClient = new WebClient())
-                {
-                    await webClient.DownloadFileTaskAsync("https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip", zipPath);
-                }
+                string zipPath = Path.Combine(_installPath, "steamcmd.zip");
+                Stream stream = await App.httpClient.GetStreamAsync("https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip");
+                using FileStream fileStream = File.Create(zipPath);
+                //using WebClient webClient = new();
+                //await webClient.DownloadFileTaskAsync("https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip", zipPath);
 
                 //Extract steamcmd.zip and delete the zip
                 await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, _installPath));
@@ -77,7 +77,7 @@ namespace WindowsGSM.Installer
                             continue;
                         }
 
-                        string[] keyvalue = line.Split(new char[] { '=' }, 2);
+                        string[] keyvalue = line.Split(['='], 2);
                         if (keyvalue[0] == "steamUser")
                         {
                             steamUser = keyvalue[1].Trim('\"');
@@ -119,7 +119,7 @@ namespace WindowsGSM.Installer
         // New parameter script
         public static string GetParameter(string forceInstallDir, string appId, bool validate = true, bool loginAnonymous = true, string modName = null, string custom = null)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             // Set up force_install_dir parameter
             sb.Append($"+force_install_dir \"{forceInstallDir}\"");
@@ -131,7 +131,7 @@ namespace WindowsGSM.Installer
             }
             else
             {
-                var (username, password) = GetSteamUsernamePassword();
+                (string username, string password) = GetSteamUsernamePassword();
                 if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password)) { return null; }
                 sb.Append($" +login \"{username}\" \"{password}\"");
             }
@@ -140,7 +140,7 @@ namespace WindowsGSM.Installer
             sb.Append(!string.IsNullOrWhiteSpace(modName) ? $" +app_set_config {appId} mod \"{modName}\"" : string.Empty);
 
             // Install 4 more times if hlds.exe (appId = 90)
-            for (var i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 // Set up app_update parameter
                 sb.Append($" +app_update {appId}");
@@ -169,14 +169,14 @@ namespace WindowsGSM.Installer
             }
 
             string username = null, password = null;
-            foreach (var line in File.ReadAllLines(_userDataPath).ToList())
+            foreach (string line in File.ReadAllLines(_userDataPath).ToList())
             {
                 if (line[0] == '/' && line[1] == '/') { continue; } // Skip the line if it is a comment line
-                var keyValue = line.Split(new[] { '=' }, 2);
+                string[] keyValue = line.Split(['='], 2);
                 switch (keyValue[0])
                 {
-                    case "steamUser": username = keyValue[1].Substring(1, keyValue[1].Length - 2); break;
-                    case "steamPass": password = keyValue[1].Substring(1, keyValue[1].Length - 2); break;
+                    case "steamUser": username = keyValue[1][1..^1]; break;
+                    case "steamPass": password = keyValue[1][1..^1]; break;
                 }
             }
 
@@ -204,16 +204,15 @@ namespace WindowsGSM.Installer
 
             //Console.WriteLine($"SteamCMD Param: {_param}");
 
-            var firewall = new WindowsFirewall(_exeFile, exePath);
+            WindowsFirewall firewall = new(_exeFile, exePath);
             if (!await firewall.IsRuleExist())
             {
                 await firewall.AddRule();
             }
 
             if (string.IsNullOrWhiteSpace(_param) || !_param.Contains("-overrideminos"))
-                _param = _param + " -overrideminos";
-            Process p = new Process
-            {
+                _param += " -overrideminos";
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = _installPath,
@@ -249,7 +248,7 @@ namespace WindowsGSM.Installer
         public static async Task<(Process, string)> UpdateEx(string serverId, string appId, bool validate = true, bool loginAnonymous = true, string modName = null, string custom = null, bool embedConsole = true)
         {
             if (string.IsNullOrWhiteSpace(custom) || !custom.Contains("-overrideminos"))
-                custom = custom + " -overrideminos";
+                custom += " -overrideminos";
             string param = GetParameter(ServerPath.GetServersServerFiles(serverId), appId, validate, loginAnonymous, modName, custom);
             if (param == null)
             {
@@ -265,8 +264,7 @@ namespace WindowsGSM.Installer
             // Fix the SteamCMD issue
             Directory.CreateDirectory(Path.Combine(ServerPath.GetServersServerFiles(serverId), "steamapps"));
 
-            var p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     WorkingDirectory = _installPath,
@@ -286,7 +284,7 @@ namespace WindowsGSM.Installer
                 p.StartInfo.RedirectStandardInput = true;
                 p.StartInfo.RedirectStandardOutput = true;
                 p.StartInfo.RedirectStandardError = true;
-                var serverConsole = new ServerConsole(serverId);
+                ServerConsole serverConsole = new(serverId);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -316,14 +314,14 @@ namespace WindowsGSM.Installer
 
             if (p.ExitCode != 0)
             {
-                Error = $"Exit code: {p.ExitCode.ToString()}";
+                Error = $"Exit code: {p.ExitCode}";
                 return false;
             }
 
             return true;
         }
 
-        private async void SendEnterPreventFreeze(Process p)
+        private static async void SendEnterPreventFreeze(Process p)
         {
             try
             {
@@ -378,8 +376,8 @@ namespace WindowsGSM.Installer
                 return string.Empty;
             }
 
-            Regex regex = new Regex("\"buildid\".{1,}\"(.*?)\"");
-            var matches = regex.Matches(text);
+            Regex regex = new("\"buildid\".{1,}\"(.*?)\"");
+            MatchCollection matches = regex.Matches(text);
 
             if (matches.Count != 1 || matches[0].Groups.Count != 2)
             {
@@ -403,7 +401,7 @@ namespace WindowsGSM.Installer
                 }
             }
 
-            WindowsFirewall firewall = new WindowsFirewall("steamcmd.exe", exePath);
+            WindowsFirewall firewall = new("steamcmd.exe", exePath);
             if (!await firewall.IsRuleExist())
             {
                 await firewall.AddRule();
@@ -427,8 +425,7 @@ namespace WindowsGSM.Installer
                 }
             });
 
-            Process p = new Process
-            {
+            Process p = new() {
                 StartInfo =
                 {
                     FileName = exePath,
@@ -444,8 +441,8 @@ namespace WindowsGSM.Installer
             SendEnterPreventFreeze(p);
 
             string output = await p.StandardOutput.ReadToEndAsync();
-            Regex regex = new Regex("\"public\"\r\n.{0,}{\r\n.{0,}\"buildid\".{1,}\"(.*?)\"");
-            var matches = regex.Matches(output);
+            Regex regex = new("\"public\"\r\n.{0,}{\r\n.{0,}\"buildid\".{1,}\"(.*?)\"");
+            MatchCollection matches = regex.Matches(output);
 
             if (matches.Count < 1 || matches[1].Groups.Count < 2)
             {
@@ -456,24 +453,22 @@ namespace WindowsGSM.Installer
             return matches[0].Groups[1].Value;
         }
 
-        public void CreateUserDataTxtIfNotExist()
+        public static void CreateUserDataTxtIfNotExist()
         {
             if (!File.Exists(_userDataPath))
             {
                 File.Create(_userDataPath).Dispose();
 
-                using (TextWriter textwriter = new StreamWriter(_userDataPath))
-                {
-                    textwriter.WriteLine("// For security and compatibility reasons, WindowsGSM suggests you to create a new steam account.");
-                    textwriter.WriteLine("// More info: (https://docs.windowsgsm.com/installer/steamcmd)");
-                    textwriter.WriteLine("// ");
-                    textwriter.WriteLine("// Username and password - No Steam Guard             (Supported + Auto update supported) (Recommended)");
-                    textwriter.WriteLine("// Username and password - Steam Guard via Email      (Supported + Auto update supported)");
-                    textwriter.WriteLine("// Username and password - Steam Guard via Smartphone (Supported + Auto update NOT supported)");
-                    textwriter.WriteLine("// ");
-                    textwriter.WriteLine("steamUser=\"\"");
-                    textwriter.WriteLine("steamPass=\"\"");
-                }
+                using StreamWriter textwriter = new(_userDataPath);
+                textwriter.WriteLine("// For security and compatibility reasons, WindowsGSM suggests you to create a new steam account.");
+                textwriter.WriteLine("// More info: (https://docs.windowsgsm.com/installer/steamcmd)");
+                textwriter.WriteLine("// ");
+                textwriter.WriteLine("// Username and password - No Steam Guard             (Supported + Auto update supported) (Recommended)");
+                textwriter.WriteLine("// Username and password - Steam Guard via Email      (Supported + Auto update supported)");
+                textwriter.WriteLine("// Username and password - Steam Guard via Smartphone (Supported + Auto update NOT supported)");
+                textwriter.WriteLine("// ");
+                textwriter.WriteLine("steamUser=\"\"");
+                textwriter.WriteLine("steamPass=\"\"");
             }
         }
     }

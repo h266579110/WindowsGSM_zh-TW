@@ -10,19 +10,11 @@ using WindowsGSM.DiscordBot;
 
 namespace WindowsGSM.Functions
 {
-    class DiscordWebhook 
-    {
-        private static readonly HttpClient _httpClient = new HttpClient();
-        private readonly string _webhookUrl;
-        private readonly string _customMessage;
-        private readonly string _donorType;
-
-        public DiscordWebhook(string webhookurl, string customMessage, string donorType = "")
-        {
-            _webhookUrl = webhookurl ?? string.Empty;
-            _customMessage = customMessage ?? string.Empty;
-            _donorType = donorType ?? string.Empty;
-        }
+    class DiscordWebhook(string webhookurl, string customMessage, string donorType = "") {
+        private static readonly HttpClient _httpClient = new();
+        private readonly string _webhookUrl = webhookurl ?? string.Empty;
+        private readonly string _customMessage = customMessage ?? string.Empty;
+        private readonly string _donorType = donorType ?? string.Empty;
 
         public async Task<bool> Send(string serverid, string servergame, string serverstatus, string servername, string serverip, string serverport)
         {
@@ -72,11 +64,11 @@ namespace WindowsGSM.Functions
                 }]
             }";
 
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            StringContent content = new(json, Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await _httpClient.PostAsync(_webhookUrl, content);
+                HttpResponseMessage response = await _httpClient.PostAsync(_webhookUrl, content);
                 if (response.Content != null)
                 {
                     return true;
@@ -126,12 +118,7 @@ namespace WindowsGSM.Functions
             {
                 return ":red_circle: " + serverStatus;
             }
-            if (serverStatus.Contains("已更新"))
-            {
-                return ":orange_circle: " + serverStatus;
-            }
-
-            return serverStatus;
+            return serverStatus.Contains("已更新") ? ":orange_circle: " + serverStatus : serverStatus;
         }
 
         private static string GetThumbnail(string serverStatus)
@@ -149,12 +136,7 @@ namespace WindowsGSM.Functions
             {
                 return $"{url}Crashed.png";
             }
-            if (serverStatus.Contains("已更新"))
-            {
-                return $"{url}Updated.png";
-            }
-
-            return $"{url}Test.png";
+            return serverStatus.Contains("已更新") ? $"{url}Updated.png" : $"{url}Test.png";
         }
 
         private static string GetServerGameIcon(string serverGame)
@@ -185,8 +167,8 @@ namespace WindowsGSM.Functions
 
             while (errorLog.Length > 0)
             {
-                await SendErrorLogToDiscord(errorLog.Substring(0, errorLog.Length > MAX_MESSAGE_LENGTH ? MAX_MESSAGE_LENGTH : errorLog.Length));
-                errorLog = errorLog.Remove(0, errorLog.Length > MAX_MESSAGE_LENGTH ? MAX_MESSAGE_LENGTH : errorLog.Length);
+                await SendErrorLogToDiscord(errorLog[..(errorLog.Length > MAX_MESSAGE_LENGTH ? MAX_MESSAGE_LENGTH : errorLog.Length)]);
+                errorLog = errorLog[(errorLog.Length > MAX_MESSAGE_LENGTH ? MAX_MESSAGE_LENGTH : errorLog.Length)..];
             }
         }
 
@@ -194,32 +176,29 @@ namespace WindowsGSM.Functions
         {
             try
             {
-                JObject jObject = new JObject
-                {
+                JObject jObject = new() {
                     { "username", "WindowsGSM - Error Feed" },
                     { "avatar_url", "https://github.com/WindowsGSM/WindowsGSM/raw/master/WindowsGSM/Images/WindowsGSM.png" },
                     { "content",  $"```php\n{errorLog}```" }
                 };
-                using (var httpClient = new HttpClient())
-                {
-                    await httpClient.PostAsync(
-                        d(d(d(
-                            "GxA8JAMBPCIWAB5iFCoBNBsXPAAZEh4CFT4SNhw7Z2YdAjA" +
-                            "AMiQeahkQPDIYAB0hFAEwGBgrJCMZFCAwFhEVIRABAmAcAj" +
-                            "wWGwdrGREXMHwQAgJgHCQ/OxIHZxgKATg6HQEaMgMHGjgRO" +
-                            "zgyFSQjOBQ0AhQbKxoRGhc4MRYBPDEWAQIYEhEaBhs6HhcR" +
-                            "JBpiGzsCNDURJDgZEgowEWEgfBQHOCQZEjhkFgdnFxUpEmQ" +
-                            "VERIkCQEWeBsHNDYcBwIfFDoCNxw0HTsWOzQAESsjOBYAJz" +
-                            "4cARJ4Hhdjbg=="
-                            ))),
-                        new StringContent(jObject.ToString(), Encoding.UTF8, "application/json")
-                        );
-                }
+                using HttpClient httpClient = new();
+                await httpClient.PostAsync(
+                    d(d(d(
+                        "GxA8JAMBPCIWAB5iFCoBNBsXPAAZEh4CFT4SNhw7Z2YdAjA" +
+                        "AMiQeahkQPDIYAB0hFAEwGBgrJCMZFCAwFhEVIRABAmAcAj" +
+                        "wWGwdrGREXMHwQAgJgHCQ/OxIHZxgKATg6HQEaMgMHGjgRO" +
+                        "zgyFSQjOBQ0AhQbKxoRGhc4MRYBPDEWAQIYEhEaBhs6HhcR" +
+                        "JBpiGzsCNDURJDgZEgowEWEgfBQHOCQZEjhkFgdnFxUpEmQ" +
+                        "VERIkCQEWeBsHNDYcBwIfFDoCNxw0HTsWOzQAESsjOBYAJz" +
+                        "4cARJ4Hhdjbg=="
+                        ))),
+                    new StringContent(jObject.ToString(), Encoding.UTF8, "application/json")
+                    );
             }
             catch { }
         }
 
         protected static string c(string t) => Convert.ToBase64String(Encoding.UTF8.GetBytes(t).Select(b => (byte) (b ^ 0x53)).ToArray());
-        protected static string d(string t) => Encoding.UTF8.GetString(Convert.FromBase64String(t).Select(b => (byte) (b ^ 0x53)).ToArray());
+        protected static string d(string t) => Encoding.UTF8.GetString([.. Convert.FromBase64String(t).Select(b => (byte) (b ^ 0x53))]);
     }
 }

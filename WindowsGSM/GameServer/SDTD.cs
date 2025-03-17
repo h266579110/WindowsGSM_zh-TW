@@ -75,15 +75,15 @@ namespace WindowsGSM.GameServer
                     Console.WriteLine("Download from github seems to have failed.");
                     return;
                 }
-                var sb = new StringBuilder();
-                StreamReader sr = new StreamReader(configPath);
-                var line = sr.ReadLine();
+                StringBuilder sb = new();
+                StreamReader sr = new(configPath);
+                string line = sr.ReadLine();
                 while (line != null)
                 {
                     if (line.Contains("{{hostname}}"))
                         sb.AppendLine(line.Replace("{{hostname}}", serverData.ServerName));
                     else if (line.Contains("{{rcon_password}}"))
-                        sb.AppendLine(line.Replace("{{rcon_password}}", serverData.GetRCONPassword()));
+                        sb.AppendLine(line.Replace("{{rcon_password}}", ServerConfig.GetRCONPassword()));
                     else if (line.Contains("{{port}}"))
                         sb.AppendLine(line.Replace("{{port}}", serverData.ServerPort));
                     else if (line.Contains("{{telnetPort}}"))
@@ -179,7 +179,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(serverData.ServerID);
+                ServerConsole serverConsole = new(serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -190,7 +190,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(async () =>
             {

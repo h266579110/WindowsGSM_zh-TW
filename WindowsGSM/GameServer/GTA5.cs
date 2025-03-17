@@ -4,15 +4,16 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text.RegularExpressions;
+using System;
+using Microsoft.CodeAnalysis.Recommendations;
 
 namespace WindowsGSM.GameServer
 {
-    class GTA5
-    {
-        private readonly Functions.ServerConfig _serverData;
+    class GTA5(Functions.ServerConfig serverData) {
+        private readonly Functions.ServerConfig _serverData = serverData;
 
         public string Error;
-        public string Notice;
+        public string Notice = string.Empty;
 
         public const string FullName = "Grand Theft Auto V Dedicated Server (FiveM)";
         public string StartPath = @"server\FXServer.exe";
@@ -26,11 +27,6 @@ namespace WindowsGSM.GameServer
         public string Maxplayers = "32";
         public string Additional = "+exec server.cfg";
 
-        public GTA5(Functions.ServerConfig serverData)
-        {
-            _serverData = serverData;
-        }
-
         public async void CreateServerCFG()
         {
             //Download server.cfg
@@ -39,8 +35,8 @@ namespace WindowsGSM.GameServer
             {
                 string configText = File.ReadAllText(configPath);
                 configText = configText.Replace("{{hostname}}", _serverData.ServerName);
-                configText = configText.Replace("{{rcon_password}}", _serverData.GetRCONPassword());
-                configText = configText.Replace("{{ip}}", _serverData.GetIPAddress());
+                configText = configText.Replace("{{rcon_password}}", Functions.ServerConfig.GetRCONPassword());
+                configText = configText.Replace("{{ip}}", Functions.ServerConfig.GetIPAddress());
                 configText = configText.Replace("{{port}}", _serverData.ServerPort);
                 configText = configText.Replace("{{maxplayers}}", Maxplayers);
                 File.WriteAllText(configPath, configText);
@@ -115,7 +111,7 @@ namespace WindowsGSM.GameServer
                     },
                     EnableRaisingEvents = true
                 };
-                var serverConsole = new Functions.ServerConsole(_serverData.ServerID);
+                Functions.ServerConsole serverConsole = new(_serverData.ServerID);
                 p.OutputDataReceived += serverConsole.AddOutput;
                 p.ErrorDataReceived += serverConsole.AddOutput;
                 p.Start();
@@ -126,7 +122,7 @@ namespace WindowsGSM.GameServer
             return p;
         }
 
-        public async Task Stop(Process p)
+        public static async Task Stop(Process p)
         {
             await Task.Run(() =>
             {
@@ -143,49 +139,48 @@ namespace WindowsGSM.GameServer
 
         public async Task<Process> Install()
         {
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    string html = await webClient.DownloadStringTaskAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
-                    Regex regex = new Regex(@"[0-9]{4}-[ -~][^\s]{39}");
-                    var matches = regex.Matches(html);
+            try {
+                string html = await App.httpClient.GetStringAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
+                //using WebClient webClient = new();
+                //string html = await webClient.DownloadStringTaskAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
+                Regex regex = new(@"[0-9]{4}-[ -~][^\s]{39}");
+                MatchCollection matches = regex.Matches(html);
 
-                    if (matches.Count <= 0)
-                    {
-                        return null;
-                    }
-
-                    //Match 1 is the latest recommended
-                    string recommended = regex.Match(html).ToString();
-
-                    //Download server.zip and extract then delete server.zip
-                    string serverPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server");
-                    Directory.CreateDirectory(serverPath);
-                    string zipPath = Path.Combine(serverPath, "server.zip");
-                    await webClient.DownloadFileTaskAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{recommended}/server.zip", zipPath);
-                    await Task.Run(() =>
-                    {
-                        try
-                        {
-                            ZipFile.ExtractToDirectory(zipPath, serverPath);
-                        }
-                        catch
-                        {
-                            Error = "Path too long";
-                        }
-                    });
-                    await Task.Run(() => File.Delete(zipPath));
-
-                    //Create FiveM-version.txt and write the downloaded version with hash
-                    File.WriteAllText(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "FiveM-version.txt"), recommended);
-
-                    //Download cfx-server-data-master and extract to folder cfx-server-data-master then delete cfx-server-data-master.zip
-                    zipPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "cfx-server-data-master.zip");
-                    await webClient.DownloadFileTaskAsync("https://github.com/citizenfx/cfx-server-data/archive/master.zip", zipPath);
-                    await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID)));
-                    await Task.Run(() => File.Delete(zipPath));
+                if (matches.Count <= 0) {
+                    return null;
                 }
+
+                //Match 1 is the latest recommended
+                string recommended = regex.Match(html).ToString();
+
+                //Download server.zip and extract then delete server.zip
+                string serverPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server");
+                Directory.CreateDirectory(serverPath);
+                string zipPath = Path.Combine(serverPath, "server.zip");
+                Stream stream = await App.httpClient.GetStreamAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{recommended}/server.zip");
+                using FileStream fileStream = File.Create(zipPath);
+                await stream.CopyToAsync(fileStream);
+                //await webClient.DownloadFileTaskAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{recommended}/server.zip", zipPath);
+                await Task.Run(() => {
+                    try {
+                        ZipFile.ExtractToDirectory(zipPath, serverPath);
+                    } catch {
+                        Error = "Path too long";
+                    }
+                });
+                await Task.Run(() => File.Delete(zipPath));
+
+                //Create FiveM-version.txt and write the downloaded version with hash
+                File.WriteAllText(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "FiveM-version.txt"), recommended);
+
+                //Download cfx-server-data-master and extract to folder cfx-server-data-master then delete cfx-server-data-master.zip
+                zipPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "cfx-server-data-master.zip");
+                stream = await App.httpClient.GetStreamAsync("https://github.com/citizenfx/cfx-server-data/archive/master.zip");
+                using FileStream fileStream2 = File.Create(zipPath);
+                await stream.CopyToAsync(fileStream2);
+                //await webClient.DownloadFileTaskAsync("https://github.com/citizenfx/cfx-server-data/archive/master.zip", zipPath);
+                await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, Functions.ServerPath.GetServersServerFiles(_serverData.ServerID)));
+                await Task.Run(() => File.Delete(zipPath));
 
                 return null;
             }
@@ -199,49 +194,41 @@ namespace WindowsGSM.GameServer
         {
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string remoteBuild = await GetRemoteBuild();
+                //using WebClient webClient = new();
+                string remoteBuild = await GetRemoteBuild();
 
-                    //Download server.zip and extract then delete server.zip
-                    string serverPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server");
-                    await Task.Run(() =>
-                    {
-                        try
-                        {
-                            Directory.Delete(serverPath, true);
-                        }
-                        catch
-                        {
-                            //ignore
-                        }
-                    });
-
-                    if (Directory.Exists(serverPath))
-                    {
-                        Error = $"Unable to delete server folder. Path: {serverPath}";
-                        return null;
+                //Download server.zip and extract then delete server.zip
+                string serverPath = Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "server");
+                await Task.Run(() => {
+                    try {
+                        Directory.Delete(serverPath, true);
+                    } catch {
+                        //ignore
                     }
+                });
 
-                    Directory.CreateDirectory(serverPath);
-                    string zipPath = Path.Combine(serverPath, "server.zip");
-                    await webClient.DownloadFileTaskAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{remoteBuild}/server.zip", zipPath);
-                    await Task.Run(() =>
-                    {
-                        try
-                        {
-                            ZipFile.ExtractToDirectory(zipPath, serverPath);
-                        }
-                        catch
-                        {
-                            Error = "Path too long";
-                        }
-                    });
-                    await Task.Run(() => File.Delete(zipPath));
-
-                    //Create FiveM-version.txt and write the downloaded version with hash
-                    File.WriteAllText(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "FiveM-version.txt"), remoteBuild);
+                if (Directory.Exists(serverPath)) {
+                    Error = $"Unable to delete server folder. Path: {serverPath}";
+                    return null;
                 }
+
+                Directory.CreateDirectory(serverPath);
+                string zipPath = Path.Combine(serverPath, "server.zip");
+                Stream stream = await App.httpClient.GetStreamAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{remoteBuild}/server.zip");
+                using FileStream fileStream = File.Create(zipPath);
+                await stream.CopyToAsync(fileStream);
+                //await webClient.DownloadFileTaskAsync($"https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/{remoteBuild}/server.zip", zipPath);
+                await Task.Run(() => {
+                    try {
+                        ZipFile.ExtractToDirectory(zipPath, serverPath);
+                    } catch {
+                        Error = "Path too long";
+                    }
+                });
+                await Task.Run(() => File.Delete(zipPath));
+
+                //Create FiveM-version.txt and write the downloaded version with hash
+                File.WriteAllText(Functions.ServerPath.GetServersServerFiles(_serverData.ServerID, "FiveM-version.txt"), remoteBuild);
 
                 return null;
             }
@@ -279,14 +266,13 @@ namespace WindowsGSM.GameServer
         {
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string html = await webClient.DownloadStringTaskAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
-                    Regex regex = new Regex(@"[0-9]{4}-[ -~][^\s]{39}");
-                    var matches = regex.Matches(html);
+                string html = await App.httpClient.GetStringAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
+                //using WebClient webClient = new();
+                //string html = await webClient.DownloadStringTaskAsync("https://runtime.fivem.net/artifacts/fivem/build_server_windows/master/");
+                Regex regex = new(@"[0-9]{4}-[ -~][^\s]{39}");
+                MatchCollection matches = regex.Matches(html);
 
-                    return matches[0].Value;
-                }
+                return matches[0].Value;
             }
             catch
             {

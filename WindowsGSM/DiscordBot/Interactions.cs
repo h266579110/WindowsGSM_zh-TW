@@ -8,17 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace WindowsGSM.DiscordBot
 {
-    public class Interactions
-    {
-        private readonly DiscordSocketClient _client;
+    public class Interactions(DiscordSocketClient client, IServiceProvider serviceProvider) {
+        private readonly DiscordSocketClient _client = client;
         private InteractionService _interactionService;
-        private readonly IServiceProvider _serviceProvider;
-
-        public Interactions(DiscordSocketClient client, IServiceProvider serviceProvider)
-        {
-            _client = client;
-            _serviceProvider = serviceProvider;
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
 
         public async Task InitializeInteractions()
         {
@@ -32,7 +25,7 @@ namespace WindowsGSM.DiscordBot
 
         private async Task HandleInteraction(SocketInteraction interaction)
         {
-            var context = new SocketInteractionContext(_client, interaction);
+            SocketInteractionContext context = new(_client, interaction);
             try
             {
                 await _interactionService.ExecuteCommandAsync(context, _serviceProvider);

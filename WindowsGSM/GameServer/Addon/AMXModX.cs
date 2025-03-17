@@ -42,16 +42,18 @@ namespace WindowsGSM.GameServer.Addon
         {
             string version = "1.10";
 
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    string fileName = await webClient.DownloadStringTaskAsync($"https://www.amxmodx.org/amxxdrop/{version}/amxmodx-latest-base-windows");
-                    string filePath = Path.Combine(path, fileName.Trim());
-                    await webClient.DownloadFileTaskAsync($"https://www.amxmodx.org/amxxdrop/{version}/{fileName}", filePath);
-                    await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, path); } catch { } });
-                    await Task.Run(() => { try { File.Delete(filePath); } catch { } });
-                }
+            try {
+                string fileName = await App.httpClient.GetStringAsync($"https://www.amxmodx.org/amxxdrop/{version}/amxmodx-latest-base-windows");
+                string filePath = Path.Combine(path, fileName.Trim());
+                Stream stream = await App.httpClient.GetStreamAsync($"https://www.amxmodx.org/amxxdrop/{version}/{fileName}");
+                using FileStream fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //string fileName = await webClient.DownloadStringTaskAsync($"https://www.amxmodx.org/amxxdrop/{version}/amxmodx-latest-base-windows");
+                //string filePath = Path.Combine(path, fileName.Trim());
+                //await webClient.DownloadFileTaskAsync($"https://www.amxmodx.org/amxxdrop/{version}/{fileName}", filePath);
+                await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, path); } catch { } });
+                await Task.Run(() => { try { File.Delete(filePath); } catch { } });
             }
             catch
             {
@@ -67,14 +69,17 @@ namespace WindowsGSM.GameServer.Addon
 
             try
             {
-                using (WebClient webClient = new WebClient())
-                {
-                    string fileName = $"metamod-p-{version}-windows.zip";
-                    string filePath = Path.Combine(MMFolder, fileName);
-                    await webClient.DownloadFileTaskAsync($"https://downloads.sourceforge.net/project/metamod-p/Metamod-P%20Binaries/{version}/{fileName}", filePath);
-                    await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, MMFolder); } catch { } });
-                    await Task.Run(() => { try { File.Delete(filePath); } catch { } });
-                }
+                string fileName = $"metamod-p-{version}-windows.zip";
+                string filePath = Path.Combine(MMFolder, fileName);
+                Stream stream = await App.httpClient.GetStreamAsync($"https://downloads.sourceforge.net/project/metamod-p/Metamod-P%20Binaries/{version}/{fileName}");
+                using FileStream fileStream = File.Create(filePath);
+                await stream.CopyToAsync(fileStream);
+                //using WebClient webClient = new();
+                //string fileName = $"metamod-p-{version}-windows.zip";
+                //string filePath = Path.Combine(MMFolder, fileName);
+                //await webClient.DownloadFileTaskAsync($"https://downloads.sourceforge.net/project/metamod-p/Metamod-P%20Binaries/{version}/{fileName}", filePath);
+                await Task.Run(() => { try { ZipFile.ExtractToDirectory(filePath, MMFolder); } catch { } });
+                await Task.Run(() => { try { File.Delete(filePath); } catch { } });
             }
             catch
             {
