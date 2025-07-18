@@ -23,7 +23,7 @@ namespace WindowsGSM.Plugins
         };
 
         // - Settings properties for SteamCMD installer
-        public override bool loginAnonymous => false;
+        public override bool LoginAnonymous => false;
         public override string AppId => "223350"; // Game server appId Steam
         public static string SteamGameId => "221100"; // Id of the Game itself. needed for workshop
 //        public string SteamGameId => "221380"; // DEBUGGGG

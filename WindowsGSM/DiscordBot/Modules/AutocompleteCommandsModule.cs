@@ -71,7 +71,7 @@ namespace WindowsGSM.DiscordBot.Modules
                 }
 
                 // Only send suggestions that starts with user's input; use case insensitive matching
-                results.Where(x => x.Name.StartsWith(input, StringComparison.InvariantCultureIgnoreCase));
+                _ = results.Where(x => x.Name.StartsWith(input, StringComparison.InvariantCultureIgnoreCase));
 
                 // Max - 25 suggestions at a time
                 await (Context.Interaction as SocketAutocompleteInteraction)?.RespondAsync(results.Take(25));

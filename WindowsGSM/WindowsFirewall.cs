@@ -18,7 +18,7 @@ namespace WindowsGSM
 
                     foreach (INetFwAuthorizedApplication app in netFwMgr.LocalPolicy.CurrentProfile.AuthorizedApplications)
                     {
-                        if (app.ProcessImageFileName.ToLower() == Path.ToLower())
+                        if (app.ProcessImageFileName.Equals(Path, StringComparison.CurrentCultureIgnoreCase))
                         {
                             return true;
                         }
@@ -79,7 +79,7 @@ namespace WindowsGSM
                     foreach (INetFwAuthorizedApplication app in netFwMgr.LocalPolicy.CurrentProfile.AuthorizedApplications)
                     {
                         string filename = app.ProcessImageFileName.ToLower();
-                        if (filename.Contains(Path.ToLower()))
+                        if (filename.Contains(Path, StringComparison.CurrentCultureIgnoreCase))
                         {
                             netFwMgr.LocalPolicy.CurrentProfile.AuthorizedApplications.Remove(app.ProcessImageFileName);
                         }

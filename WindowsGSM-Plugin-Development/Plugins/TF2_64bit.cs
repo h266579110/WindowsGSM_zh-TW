@@ -22,7 +22,7 @@ namespace WindowsGSM.Plugins
         public bool AllowsEmbedConsole = true;
         public int PortIncrements = 0;
         public dynamic QueryMethod = new GameServer.Query.A2S();
-        public override bool loginAnonymous => true;
+        public override bool LoginAnonymous => true;
         // - Game server default values
         public string Port = "27015";
         public string QueryPort = "27015";

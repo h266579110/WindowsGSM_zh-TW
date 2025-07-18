@@ -140,7 +140,7 @@ namespace WindowsGSM.Functions
                 }
             }
 
-            if (_recorderConsoleList.Any())
+            if (_recorderConsoleList.Count != 0)
             {
                 _recorderConsoleList.Add(text);
 

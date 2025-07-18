@@ -8,7 +8,6 @@ using System.Runtime.Loader;
 using System;
 using Basic.Reference.Assemblies;
 using ICSharpCode.SharpZipLib.Zip;
-using System.CodeDom.Compiler;
 using System.Text;
 using WindowsGSM.Functions;
 
@@ -55,7 +54,7 @@ public class RoslynCompiler
             List<Diagnostic> compilationErrors = [.. result.Diagnostics.Where(diagnostic =>
                         diagnostic.IsWarningAsError ||
                         diagnostic.Severity == DiagnosticSeverity.Error)];
-            if (compilationErrors.Any()) {
+            if (compilationErrors.Count != 0) {
                 Diagnostic firstError = compilationErrors.First();
                 string errorNumber = firstError.Id;
                 string errorDescription = firstError.GetMessage();

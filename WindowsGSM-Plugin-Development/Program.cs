@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace WindowsGSM_Plugin_Development
 {
@@ -27,7 +24,7 @@ namespace WindowsGSM_Plugin_Development
 #if DEBUG
             string target = "Debug";
 #else
-            var target = "Release";
+            string target = "Release";
 #endif
             string wgsmTarget = Directory.CreateDirectory(Path.Combine(wgsnBin, target)).FullName; // Create \Debug or \Release directory
             string wgsmPlugins = Directory.CreateDirectory(Path.Combine(wgsmTarget, "plugins")).FullName; // Create \plugins directory

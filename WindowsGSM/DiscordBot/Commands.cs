@@ -450,7 +450,7 @@ namespace WindowsGSM.DiscordBot {
                     {
                         Console.WriteLine("executing gameserverstats_ server exists");
                         MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(args[1]);
-                        if (serverStatus == MainWindow.ServerStatus.Started)
+                        if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                         {
                             ServerTable serverTable = WindowsGSM.GetServerTableById(args[1]);
                             await message.Channel.SendMessageAsync(embed: (await GetServerStatsMessage(serverTable)).Build());

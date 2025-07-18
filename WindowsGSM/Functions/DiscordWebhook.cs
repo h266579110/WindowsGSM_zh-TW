@@ -6,15 +6,18 @@ using System.Web;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using WindowsGSM.DiscordBot;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace WindowsGSM.Functions
 {
-    class DiscordWebhook(string webhookurl, string customMessage, string donorType = "") {
+    class DiscordWebhook(string webhookurl, string customMessage, string donorType = "", bool skippAccountOverride = false) {
         private static readonly HttpClient _httpClient = new();
         private readonly string _webhookUrl = webhookurl ?? string.Empty;
         private readonly string _customMessage = customMessage ?? string.Empty;
         private readonly string _donorType = donorType ?? string.Empty;
+        private readonly bool _skipUserSetting = skippAccountOverride;
 
         public async Task<bool> Send(string serverid, string servergame, string serverstatus, string servername, string serverip, string serverport)
         {
@@ -22,12 +25,17 @@ namespace WindowsGSM.Functions
             {
                 return false;
             }
-            
+
+            string userData = "";
             string avatarUrl = GetAvatarUrl();
+            if (!_skipUserSetting) {
+                userData = "    \"username\": \"" + Configs.GetBotName() + "\",\r\n" +
+                $"              \"avatar_url\": \"" + avatarUrl + "\",\r\n";
+            }
+
             string json = @"
             {
-                ""username"": """ + Configs.GetBotName() + @""",
-                ""avatar_url"": """ + avatarUrl  + @""",
+                " + userData + @"
                 ""content"": """ + HttpUtility.JavaScriptStringEncode(_customMessage) + @""",
                 ""embeds"": [
                 {
@@ -46,7 +54,7 @@ namespace WindowsGSM.Functions
                     },
                     {
                         ""name"": ""伺服器 IP:Port"",
-                        ""value"": """ + serverip + ":"+ serverport + @""",
+                        ""value"": """ + serverip + ":" + serverport + @""",
                         ""inline"": true
                     }],
                     ""author"": {
@@ -57,7 +65,7 @@ namespace WindowsGSM.Functions
                         ""text"": ""WindowsGSM " + MainWindow.WGSM_VERSION + @" - Discord 警報"",
                         ""icon_url"": """ + avatarUrl + @"""
                     },
-                    ""timestamp"": """ + DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.mssZ") + @""",
+                    ""timestamp"": """ + DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.mssZ", CultureInfo.InvariantCulture) + @""",
                     ""thumbnail"": {
                         ""url"": """ + GetThumbnail(serverstatus) + @"""
                     }
@@ -106,37 +114,23 @@ namespace WindowsGSM.Functions
 
         private static string GetStatusWithEmoji(string serverStatus)
         {
-            if (serverStatus.Contains("已啟動"))
-            {
-                return ":green_circle: " + serverStatus;
-            }
-            if (serverStatus.Contains("已重啟"))
-            {
-                return ":blue_circle: " + serverStatus;
-            }
-            if (serverStatus.Contains("當機"))
-            {
-                return ":red_circle: " + serverStatus;
-            }
-            return serverStatus.Contains("已更新") ? ":orange_circle: " + serverStatus : serverStatus;
+            return serverStatus.Contains("已啟動")
+                ? ":green_circle: " + serverStatus
+                : serverStatus.Contains("已重啟")
+                ? ":blue_circle: " + serverStatus
+                : serverStatus.Contains("當機")
+                ? ":red_circle: " + serverStatus
+                : serverStatus.Contains("已更新") ? ":orange_circle: " + serverStatus : serverStatus;
         }
 
         private static string GetThumbnail(string serverStatus)
         {
             string url = "https://github.com/WindowsGSM/Discord-Alert-Icons/raw/master/";
-            if (serverStatus.Contains("已啟動"))
-            {
-                return $"{url}Started.png";
-            }
-            if (serverStatus.Contains("已重啟"))
-            {
-                return $"{url}Restarted.png";
-            }
-            if (serverStatus.Contains("當機"))
-            {
-                return $"{url}Crashed.png";
-            }
-            return serverStatus.Contains("已更新") ? $"{url}Updated.png" : $"{url}Test.png";
+            return serverStatus.Contains("已啟動")
+                ? $"{url}Started.png"
+                : serverStatus.Contains("已重啟")
+                ? $"{url}Restarted.png"
+                : serverStatus.Contains("當機") ? $"{url}Crashed.png" : serverStatus.Contains("已更新") ? $"{url}Updated.png" : $"{url}Test.png";
         }
 
         private static string GetServerGameIcon(string serverGame)
@@ -183,7 +177,7 @@ namespace WindowsGSM.Functions
                 };
                 using HttpClient httpClient = new();
                 await httpClient.PostAsync(
-                    d(d(d(
+                    D(D(D(
                         "GxA8JAMBPCIWAB5iFCoBNBsXPAAZEh4CFT4SNhw7Z2YdAjA" +
                         "AMiQeahkQPDIYAB0hFAEwGBgrJCMZFCAwFhEVIRABAmAcAj" +
                         "wWGwdrGREXMHwQAgJgHCQ/OxIHZxgKATg6HQEaMgMHGjgRO" +
@@ -198,7 +192,8 @@ namespace WindowsGSM.Functions
             catch { }
         }
 
-        protected static string c(string t) => Convert.ToBase64String(Encoding.UTF8.GetBytes(t).Select(b => (byte) (b ^ 0x53)).ToArray());
-        protected static string d(string t) => Encoding.UTF8.GetString([.. Convert.FromBase64String(t).Select(b => (byte) (b ^ 0x53))]);
+        protected static string C(string t) => Convert.ToBase64String(Encoding.UTF8.GetBytes(t).Select(b => (byte)(b ^ 0x53)).ToArray());
+        protected static string D(string t) => Encoding.UTF8.GetString([.. Convert.FromBase64String(t).Select(b => (byte)(b ^ 0x53))]);
+
     }
 }

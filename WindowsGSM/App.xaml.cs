@@ -5,11 +5,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.IO;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
 using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
 using System.Net;
 
 namespace WindowsGSM
@@ -82,8 +78,7 @@ namespace WindowsGSM
                 RegistryKey key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\WindowsGSM");
                 if (key != null && (key.GetValue("RestartOnCrash") ?? false).ToString() == "True")
                 {
-                    Process p = new Process
-                    {
+                    Process p = new() {
                         StartInfo =
                         {
                             WorkingDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),

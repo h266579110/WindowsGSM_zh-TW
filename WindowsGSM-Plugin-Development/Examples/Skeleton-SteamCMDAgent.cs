@@ -27,7 +27,7 @@ namespace WindowsGSM.Plugins
 
 
         // - Settings properties for SteamCMD installer
-        public override bool loginAnonymous => false;
+        public override bool LoginAnonymous => false;
         public override string AppId => "";
 
 

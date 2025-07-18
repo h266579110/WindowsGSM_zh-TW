@@ -148,7 +148,7 @@ namespace WindowsGSM.DiscordBot
 			return (_client == null || _client.CurrentUser == null) ? string.Empty : $"https://discordapp.com/api/oauth2/authorize?client_id={_client.CurrentUser.Id}&permissions=67497024&scope=bot%20applications.commands";
 		}
 		
-		static IServiceProvider CreateServices()
+		static ServiceProvider CreateServices()
 		{
             DiscordSocketConfig config = new()
 			{

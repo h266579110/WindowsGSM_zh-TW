@@ -45,6 +45,7 @@ namespace WindowsGSM.GameServer
         public string Maxplayers = "10";
         public string Additional = string.Empty;
 
+        public string LinkApi = "https://net-secondary.web.minecraft-services.net/api/v1.0/download/links";
         public string RegexString = @"https:\/\/www.minecraft\.net\/bedrockdedicatedserver\/bin-win\/(bedrock-server-(.*?)\.zip)";
 
         public async void CreateServerCFG()
@@ -153,7 +154,7 @@ namespace WindowsGSM.GameServer
             try
             {
                 MCBEhttpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-                string html = await MCBEhttpClient.GetStringAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
+                string html = await MCBEhttpClient.GetStringAsync(LinkApi);
                 //using WebClient webClient = new MCBEWebclient();
                 //string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
                 Regex regex = new(RegexString);
@@ -194,7 +195,7 @@ namespace WindowsGSM.GameServer
                 //using WebClient webClient = new MCBEWebclient();
                 string remoteBuild = await GetRemoteBuild();
 
-                string html = await MCBEhttpClient.GetStringAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
+                string html = await MCBEhttpClient.GetStringAsync(LinkApi);
                 //string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
                 Regex regex = new(RegexString);
                 MatchCollection matches = regex.Matches(html);
@@ -306,7 +307,7 @@ namespace WindowsGSM.GameServer
             {
                 MCBEhttpClient.DefaultRequestHeaders.Add("Accept", "*/*");
                 //using WebClient webClient = new MCBEWebclient();
-                string html = await MCBEhttpClient.GetStringAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
+                string html = await MCBEhttpClient.GetStringAsync(LinkApi);
                 //string html = await webClient.DownloadStringTaskAsync("https://www.minecraft.net/en-us/download/server/bedrock/");
 
                 Regex regex = new(RegexString);

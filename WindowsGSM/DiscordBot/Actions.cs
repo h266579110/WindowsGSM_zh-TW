@@ -101,6 +101,7 @@ namespace WindowsGSM.DiscordBot
                     MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
                     switch (serverStatus) {
                         case MainWindow.ServerStatus.Started:
+                        case MainWindow.ServerStatus.Starting:
                             bool started = await WindowsGSM.StopServerById(serverId, interaction.User.Id.ToString(), interaction.User.Username);
                             message = $"伺服器 {serverName}(ID: {serverId}) {(started ? "已停止" : "停止失敗")}";
                             break;
@@ -161,7 +162,7 @@ namespace WindowsGSM.DiscordBot
                 if (WindowsGSM.IsServerExist(serverId))
                 {
                     MainWindow.ServerStatus serverStatus = MainWindow.GetServerStatus(serverId);
-                    if (serverStatus == MainWindow.ServerStatus.Started)
+                    if (serverStatus == MainWindow.ServerStatus.Started || serverStatus == MainWindow.ServerStatus.Starting)
                     {
                         bool started = await WindowsGSM.RestartServerById(serverId, interaction.User.Id.ToString(),
                             interaction.User.Username);

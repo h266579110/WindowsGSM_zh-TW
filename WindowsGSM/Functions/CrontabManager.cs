@@ -1,18 +1,11 @@
-﻿using Microsoft.VisualBasic.ApplicationServices;
-using NCrontab;
+﻿using NCrontab;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Security.AccessControl;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using WindowsGSM.Functions;
 using static WindowsGSM.MainWindow;
 
 namespace WindowsGSM.Functions
@@ -292,7 +285,7 @@ namespace WindowsGSM.Functions
 
                 if (GetServerMetadata(serverId).DiscordAlert && GetServerMetadata(serverId).RestartCrontabAlert)
                 {
-                    DiscordWebhook webhook = new(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType);
+                    DiscordWebhook webhook = new(GetServerMetadata(serverId).DiscordWebhook, GetServerMetadata(serverId).DiscordMessage, Window.g_DonorType, GetServerMetadata(serverId).SkipUserSetup);
                     await webhook.Send(Server.ID, Server.Game, "已重啟 | 例行性重啟", Server.Name, await GetPublicIP(), Server.Port);
                     Window._latestWebhookSend = ServerStatus.Restarted;
                 }

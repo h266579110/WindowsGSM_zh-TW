@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Collections.Generic;   
 using System.Threading.Tasks;
 
 namespace WindowsGSM.GameServer.Query
 {
-    public interface QueryTemplate
+    public interface IQueryTemplate
     {
         void SetAddressPort(string address, int port, int timeout = 5);
         Task<Dictionary<string, string>> GetInfo();
@@ -20,7 +18,7 @@ namespace WindowsGSM.GameServer.Query
         public long Score = score;
         public TimeSpan? TimeConnected = timeConnected;
 
-        public override string ToString() 
+        public override readonly string ToString() 
         {
             return $"{Id}:{Name}, Score:{Score}, connected:{TimeConnected?.TotalMinutes}";
         }
